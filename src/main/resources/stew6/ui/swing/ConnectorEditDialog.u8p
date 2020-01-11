@@ -1,0 +1,28 @@
+title=Connnector Configuration
+connector.id=Connnector ID
+connector.name=Connnector Name
+connector.classpath=Classpath
+button.searchFile=Search File
+connector.driver=Driver
+button.searchDriver=Search Driver
+connector.url=URL to connect
+connector.user=User
+connector.password=Password
+connector.encryption=Encryption
+connector.readonly=Read only
+connector.autorollback=Enables auto-rollback
+button.submit=Submit
+button.tryToConnect=Try To Connect
+button.cancel=Cancel
+selectDriverClass=Selects Driver Class
+confirm.searchsystemclasspath=Classpath was not specified. Search system classpath.
+dialog.search.file.header=Search classpath
+dialog.search.file.button=Select
+try.connect=\
+Succeeded!\n\
+Name: {0}\n\
+Version: {1}
+
+search.driver.classnotfound=Driver class was not found.
+button.referToOthers=Refer to other configs
+dialog.referToOthers.message=Copy selected infos to empty cells.

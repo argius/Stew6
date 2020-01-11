@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://argius.net/stew-table.xsd" targetNamespace="http://argius.net/stew" xmlns:stew="http://argius.net/stew">
+
+  <xs:complexType name="Table">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="meta" type="stew:Meta" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="header" type="stew:HeaderRow" minOccurs="0" maxOccurs="1" />
+      <xs:element name="row" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Meta">
+    <xs:attribute name="name" type="xs:string" use="required" />
+  </xs:complexType>
+
+  <xs:complexType name="HeaderRow">
+    <xs:sequence>
+      <xs:element name="header" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Row">
+    <xs:sequence>
+      <xs:element name="items" type="stew:Items" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Items">
+    <xs:sequence>
+      <xs:element name="item" type="xs:anySimpleType" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="table" type="stew:Table" />
+
+</xs:schema>

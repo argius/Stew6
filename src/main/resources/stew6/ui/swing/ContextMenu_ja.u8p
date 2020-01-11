@@ -1,0 +1,23 @@
+auto-mnemonic=1
+
+item.sort=この列をソート
+item.copyWithEscape=エスケープ付でコピー
+item.clearSelectedCellValue=セルの値をクリア
+item.setCurrentTimeValue=現在時刻を貼り付け
+item.copyColumnName=列名をコピー
+item.findColumnName=列名を検索
+item.addEmptyRow=新しい行を追加
+item.insertFromClipboard=クリップボードのデータを追加
+item.duplicateRows=行を複製
+item.linkRowsToDatabase=行をデータベースへリンク
+item.deleteRows=行を削除
+
+# for InfoTree
+item.copySimpleName=単純名をコピー
+item.copyFullName=完全名をコピー
+item.generateWherePhrase=WHERE句条件部を生成
+item.generateSelectPhrase=SELECT文を生成(WHERE付)
+item.generateUpdateStatement=UPDATE文を生成(WHERE付)
+item.generateInsertStatement=INSERT文を生成
+item.jumpToColumnByName=この列名の列へジャンプ
+item.toggleShowColumnNumber=列番号を表示/非表示

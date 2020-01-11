@@ -1,0 +1,62 @@
+.title=Stew
+.about=Stew - SQL Tool Environment With JDBC \nversion: {0}
+
+i.committed=Commited.
+i.confirm.makesystemdir=System directory [{0}] does not exists. Is it OK to create directory?
+i.confirm.retry-timeout=No response for {0} seconds. Do you want to wait a little longer?
+i.connected=Connected.
+i.deleted=Deleted {0} records.
+i.directory-changed=The current directory was changed [{0}] to [{1}].
+i.disconnected=Disconnected.
+i.dump-alias={0}\=[{1}]
+i.exit=Exit Stew.
+i.inserted=Inserted {0} records.
+i.noalias=No aliases.
+i.now=({0,date,yyyy-MM-dd}T{0,time,HH:mm:ss}{0,time,ZZZZ})
+i.proceeded=Proceeded {0} records.
+i.response-time=[ response time: {0,number,#.###} seconds ]
+i.rollbacked=Rollbacked.
+i.script-context-initialized=Script Context was initialized.
+i.selected=Selected {0} records.
+i.succeeded-try-out-connect=\
+Succeeded!\n\
+Name: {0}\n\
+Version: {1}
+i.updated=Updated {0} records.
+i.usagePrefix=usage:
+i.usage.syntax=\ stew5 [--cui|--gui] [options] command
+w.auto-commit-not-available=Warning: Auto-commit mode is not available.
+w.connection-closed-abnormally=Warning: Connection was closed abnormally.
+w.error-occurred-on-auto-rollback=Warning: An error occurred when auto-rollback. ({0})
+w.exceeded-limit=Warning: Over limit({0}).
+w.exit-not-available-in-sequencial-command=Warning: Can not use EXIT in sequencial commands.
+w.unusable-keyword-for-alias=The keyword[{0}] is not allowed for Alias.
+e.alias-circulation-reference=Failed to apply Alias because circulation-reference was over max count ({0}).
+e.command=Error: {0}
+e.database=Database Error: {0}
+e.dir-not-exists=Directory[{0}] does not exist.
+e.fatal=Fatal Error: {0}
+e.file-not-exists=File[{0}] does not exist.
+e.id-can-only-contain-alphanum=ID can only contain alphanumeric characters: ID=[{0}]
+e.invalid-cli-option=Invalid command line option. ({0})
+e.no-connector=Connector [{0}] does not exist.
+e.not-connect=Not connected.
+e.not-found=Error: Command [{0}] was not found.
+e.readonly=Error: Connector is read-only.
+e.runtime=Runtime Error: {0}
+e.runtime-without-message=Runtime Error ({0} was thrown without message)
+e.unsupported=[{0}] is unsupported.
+e.usage=Usage: {0} {1}
+
+opt.connect=Connect DB at beginning app
+opt.cui=Start app with CUI mode
+opt.edit=Start "Connector Editor" on CUI
+opt.gui=Start app with CUI mode
+opt.quiet=Keep quiet as possible except displaying results
+opt.help=Show help
+opt.version=Show app version
+
+help.header=Options:
+help.footer=See https://github.com/argius/Stew5/wiki for further information.
+
+usage.message=type "stew5 --help" to show help

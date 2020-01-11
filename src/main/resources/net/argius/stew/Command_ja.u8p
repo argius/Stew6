@@ -1,0 +1,61 @@
+
+i.did-mkdir=ディレクトリ[{0}]を作成しました。
+i.downloaded=ダウンロードされました。 (size={0}, file={1})
+i.exported=エクスポートされました。
+i.loaded=ロードされた {1} 件中 {0} 件 追加されました。
+i.proceeded={0} 件 処理されました。
+i.updated={0} 件 更新されました。
+i.wait-time=待機時間 : {0,number,0.000} 秒
+e.file-already-exists=ファイル[{0}]が存在します。
+e.failed-create-new-file=ファイル[{0}]の作成に失敗しました。
+e.failed-mkdir-filedir=ファイル[{0}]のディレクトリ作成に失敗しました。
+e.serial-execution-interrupted=連続実行は中断されました。中断されたのは[{0}]です。
+
+usage.cd=<ディレクトリ>
+usage.-f=<ファイル>
+usage.-s=. | <スクリプトファイル> | <スクリプト言語名> <スクリプトコード>
+usage.unalias=<短縮名>
+usage.Count=<テーブル名> [<WHERE句>]
+usage.Download=<ルートディレクトリ> SELECT <ダウンロードするデータの列> [, ファイルパス...] FROM ... 
+usage.Export=<ファイル> [ HEADER ] [command(select|find|report)] \n        注: "report -"は不可
+usage.Find=<テーブル名パターン> [<テーブル種別パターン> [<スキーマ名パターン> [<カタログ名パターン> [ FULL ]]]]
+usage.Import=[<データファイル> <テーブル名> [ HEADER ]]
+usage.Load=[<SQLファイル> | <データファイル> <テーブル名> [ HEADER ]]
+usage.Report=- | <テーブル名> [ FULL | PK | INDEX ]
+usage.Time=[<回数>] <SQL文>
+usage.Upload=<ファイル> [ T | TEXT | B | BIN ] <SQL文(UPDATE|INSERT)>
+usage.Wait=<秒(小数第3位まで)> 
+
+Export.command.usage={0}\n  {1} {2}
+
+Find.label.name=テーブル名
+Find.label.type=テーブル種別
+Find.label.schema=スキーマ名
+Find.label.catalog=カタログ名
+
+Report.label.catalog=カタログ
+Report.label.schema=スキーマ
+Report.label.tablename=テーブル名
+Report.label.sequence=順番
+Report.label.columnname=カラム名
+Report.label.keyname=プライマリキー名
+Report.label.nullable=Null可
+Report.label.type=型
+Report.label.size=サイズ
+Report.dbinfo =\
+製品名             : {0}\n\
+製品バージョン     : {1}\n\
+ドライバ名         : {2}\n\
+ドライババージョン : {3}\n\
+接続ユーザ@URL     : {4}@{5}
+
+Time.once=実行時間 : {0,number,0.000} 秒
+Time.summary=\
+合計 : {0,number,0.000} 秒\n\
+平均 : {1,number,0.000} 秒\n\
+最大 : {2,number,0.000} 秒\n\
+最小 : {3,number,0.000} 秒
+
+Upload.msg.destinationTypeIs=アップロード先のデータ型は[{0}]です。
+Upload.msg.failedToDetectDestinationType=アップロード先のデータ型を取得できませんでした。（原因: {0}）\n代わりにファイルのコンテンツタイプで判別します。
+Upload.msg.fileContentTypeIs=ファイルのコンテンツタイプは[{0}]です。

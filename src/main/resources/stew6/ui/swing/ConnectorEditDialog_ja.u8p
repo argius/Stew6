@@ -1,0 +1,28 @@
+title=コネクタの設定
+connector.id=コネクタID
+connector.name=コネクタ名
+connector.classpath=クラスパス
+button.searchFile=ファイル
+connector.driver=ドライバ
+button.searchDriver=ドライバの検索
+connector.url=接続先URL
+connector.user=ユーザ
+connector.password=パスワード
+connector.encryption=暗号化処理
+connector.readonly=読取専用コマンドのみ使用する
+connector.autorollback=切断時に(自動で)ロールバックする
+button.submit=登録
+button.tryToConnect=接続試験
+button.cancel=キャンセル
+selectDriverClass=ドライバクラスの選択
+confirm.searchsystemclasspath=クラスパスが未指定のため、システムクラスパスから検索します。
+dialog.search.file.header=クラスパスの選択
+dialog.search.file.button=選択
+try.connect=\
+接続に成功しました!\n\
+接続先名称: {0}\n\
+バージョン: {1}
+
+search.driver.classnotfound=ドライバクラスが見つかりません。
+button.referToOthers=他の設定を参照
+dialog.referToOthers.message=選択した行の内容を未入力の箇所に貼り付けます。

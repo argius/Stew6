@@ -1,0 +1,61 @@
+
+i.did-mkdir=The dir[{0}] was created.
+i.downloaded=Downloaded. (size={0}, file={1})
+i.exported=Exported.
+i.loaded=Added {0} records in loaded {1} records.
+i.proceeded=Proceeded {0} records.
+i.updated=Updated {0} records.
+i.wait-time=Waited for {0,number,0.000} seconds.
+e.file-already-exists=The file[{0}] already exists.
+e.failed-create-new-file=Failed to create the file[{0}].
+e.failed-mkdir-filedir=Failed to create dir of the file[{0}].
+e.serial-execution-interrupted=Serial execution has been interrupted at [{0}]. 
+
+usage.cd=<directory>
+usage.-f=<file>
+usage.-s=. | <script-file> | <script-name> <script-code>
+usage.unalias=<alias>
+usage.Count=<table-name> [<WHERE-phrase>]
+usage.Download=<root-dir> SELECT <data-column> [, file-path...] FROM ... 
+usage.Export=<file> [ HEADER ] [command(select|find|report)] \n        * except "report -"
+usage.Find=<table-name-pattern> [<table-type-pattern> [<schema-pattern> [<catalog-pattern> [ FULL ]]]]
+usage.Import=<data-file> <table-name> [ HEADER ]
+usage.Load=<SQL-file> | <data-file> <table-name> [ HEADER ]
+usage.Report=- | <table-name> [ FULL | PK | INDEX ]
+usage.Time=[<count>] <SQL>
+usage.Upload=<file> [ T | TEXT | B | BIN ] <SQL(UPDATE|INSERT)>
+usage.Wait=<seconds(3 digits after the decimal point)> 
+
+Export.command.usage={0}\n  {1} {2}
+
+Find.label.name=Table Name
+Find.label.type=Type
+Find.label.schema=Schema
+Find.label.catalog=Catalog
+
+Report.label.catalog=Catalog
+Report.label.schema=Schema
+Report.label.tablename=Table Name
+Report.label.sequence=Sequence
+Report.label.columnname=Column Name
+Report.label.keyname=Key Name
+Report.label.nullable=Nullable
+Report.label.type=Type
+Report.label.size=Size
+Report.dbinfo =\
+Product Name:    {0}\n\
+Product Version: {1}\n\
+Driver Name:     {2}\n\
+Driver Version:  {3}\n\
+User@URL:        {4}@{5}
+
+Time.once=execution time: {0,number,0.000} seconds
+Time.summary=\
+Total: {0,number,0.000} seconds\n\
+  Ave: {1,number,0.000} seconds\n\
+  Max: {2,number,0.000} seconds\n\
+  Min: {3,number,0.000} seconds
+
+Upload.msg.destinationTypeIs=The data type of upload destination is [{0}].
+Upload.msg.failedToDetectDestinationType=Failed to get data type (cause: {0}). Detects the content type of uploading file instead.
+Upload.msg.fileContentTypeIs=The file content type is [{0}].

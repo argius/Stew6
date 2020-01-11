@@ -1,0 +1,46 @@
+i.cancelled=コマンドがキャンセルされました。\n（サーバ側の処理はキャンセルされていません。）
+i.choose-connection=接続を選択
+i.choose-history=コマンド履歴{0}件からコマンドを選択
+i.confirm-close=ウィンドウを閉じてよろしいですか？
+i.confirm-commit=コミットします。よろしいですか？
+i.confirm-jump-to-web=このコマンドは以下のWebページをWebブラウザーで開きます。よろしいですか？\n{0}
+i.confirm-overwrite=ファイル {0} は存在します。\n上書きしますか？
+i.confirm-quit=終了してよろしいですか？
+i.confirm-remove=削除してよろしいですか？
+i.confirm-rollback=ロールバックします。よろしいですか？
+i.confirm-save=保存してよろしいですか？
+i.confirm-without-register=登録せずに閉じてよろしいですか？
+i.confirm-without-save=保存せずに閉じてよろしいですか？
+i.exported=エクスポートされました。
+i.can-only-use-after-tablenode-expanded=テーブルノードを展開した後でのみ実行できます。
+i.input-encryption-key=暗号鍵を入力
+i.input-new-connector-id=<html>新しいコネクタのIDを入力<br> (英数字のみ指定可)
+i.paren-in-processing=(処理中)
+i.reconnect-after-edited-current-connector=接続中の設定を変更する場合は、変更後に再接続してください。
+i.statusbar-message=\ 実行時間 {0} 秒 ( {1} )
+w.connector-readonly=コネクタは読取専用です。
+w.import-target-not-available=インポート先が無効です。
+w.no-connector=接続設定がありません。
+w.no-histories=コマンド履歴がありません。
+w.not-connect=接続されていません。
+e.cannot-open-help-automatically=このプラットフォームでは自動でヘルプ({0})を開けません。
+e.enables-select-just-1-table=テーブルは1つだけ選択できます。
+e.error-no-detail=エラー(詳細不明)
+e.error=エラー
+e.file-not-exists=ファイル {0} は存在しません。
+e.id-already-exists=ID [{0}] は既に存在します。
+
+key.lang=ja
+
+# common menu items
+item.cut=切り取り
+item.copy=コピー
+item.paste=貼り付け
+item.selectAll=すべて選択
+item.undo=元に戻す
+item.redo=やり直し
+item.refresh=最新状態に更新
+
+# 自身のメッセージファイルを持っていないオブジェクト用
+dialog.title.export=ファイルにエクスポート
+dialog.title.import=データファイルからインポート

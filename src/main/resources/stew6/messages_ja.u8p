@@ -1,0 +1,60 @@
+.title=Stew
+.about=Stew - SQL Tool Environment With JDBC \nversion: {0}
+
+i.committed=コミットされました。
+i.confirm.makesystemdir=システムディレクトリ[{0}]は存在しません。作成しますか？
+i.confirm.retry-timeout={0}秒待ちましたが返答がありません。もう少し待ちますか？
+i.connected=接続されました。
+i.deleted={0} 件 削除されました。
+i.directory-changed=カレントディレクトリを[{0}]から[{1}]へ移動しました。
+i.disconnected=切断されました。
+i.dump-alias={0}\=[{1}]
+i.exit=Stewを終了します。
+i.inserted={0} 件 追加されました。
+i.noalias=エイリアスは未定義です。
+i.proceeded={0} 件 処理されました。
+i.response-time=[ 応答時間: {0,number,#.###} 秒 ]
+i.rollbacked=ロールバックされました。
+i.script-context-initialized=Script Context は初期化されました。
+i.selected={0} 件 ヒットしました。
+i.succeeded-try-out-connect=\
+接続に成功しました!\n\
+接続先名称: {0}\n\
+バージョン: {1}
+i.updated={0} 件 更新されました。
+i.usagePrefix=使い方:
+w.auto-commit-not-available=警告: 自動コミットモードが無効です。
+w.connection-closed-abnormally=警告: コネクションは正常に切断されませんでした。
+w.error-occurred-on-auto-rollback=警告: 自動ロールバック時にエラーが発生しました。({0})
+w.exceeded-limit=警告: 上限件数({0})を超えました。
+w.exit-not-available-in-sequencial-command=警告: 連続コマンド内のEXITは無効です。
+w.unusable-keyword-for-alias=キーワード[{0}]はエイリアスに使用できません。
+e.alias-circulation-reference=エイリアスの展開回数が上限({0})を超えたため展開を中止しました。
+e.command=エラー: {0}
+e.database=データベースエラー: {0}
+e.dir-not-exists=ディレクトリ[{0}]は存在しません。
+e.fatal=致命的なエラー: {0}
+e.file-not-exists=ファイル[{0}]は存在しません。
+e.id-can-only-contain-alphanum=IDには英数字のみ使用できます: ID=[{0}]
+e.invalid-cli-option=コマンドラインオプションが正しくありません。（{0}）
+e.no-connector=コネクタ [{0}] はありません。
+e.not-connect=接続されていません。
+e.not-found=エラー: コマンド [{0}] は見つかりませんでした。
+e.readonly=エラー: コネクタは読取専用です。
+e.runtime=実行時エラー: {0}
+e.runtime-without-message=実行時エラー（メッセージなしの {0} がスローされました）
+e.unsupported=[{0}]は実装されていません。
+e.usage=使い方: {0} {1}
+
+opt.connect=開始時にDB接続
+opt.cui=CUIモードで起動
+opt.edit=CUIの接続設定エディタを起動
+opt.gui=GUIモードで起動
+opt.quiet=可能な限り検索結果以外を出力しない
+opt.help=ヘルプを表示
+opt.version=バージョンを表示
+
+help.header=オプション:
+help.footer=より詳しい情報については https://github.com/argius/Stew5/wiki をご覧ください。
+
+usage.message=ヘルプを表示するには、"stew5 --help"を実行してください。

@@ -1,0 +1,44 @@
+
+main.start=Connnector Editor
+main.wait=Input command (help: show command list)
+main.end=Exit from Connnector Editor.
+main.notice.filenotexists=Notice: connector config file does not exist. If exec save, the file will be created.
+proc.prompt =\ >\ 
+proc.added=ID "{0}" was added.
+proc.modified=ID "{0}" was modified.
+proc.notexists=ID "{0}" does not exist.
+proc.alreadyexists=ID "{0}" already exists.
+proc.nomodification=Not changed.
+proc.remove.confirm=Is it ok to remove this connector?
+proc.remove.finished=Removed.
+proc.remove.canceled=To remove connector was cancelled.
+proc.copy.finished=Copied.
+proc.copy.canceled=To copy connector was cancelled.
+proc.save.confirm=Is it ok to save to file?
+proc.save.finished=Saved.
+proc.save.canceled=To save was cancelled.
+proc.load.confirm1=Loading will discard the current changes. 
+proc.load.confirm2=Do you want to load?
+proc.load.finished=Loaded.
+proc.load.canceled=Loading was canceled.
+proc.exit.confirm=The application is going to exit without saving. Do you want to continue?
+property.start1=Property Configuration
+property.start2=If you do not want to skip it, press enter without input.
+property.input=Input {0} (current value=[{1}])
+property.tryconnect.confirm=Do you want to test this connector?
+property.tryconnect.succeeded=Succeeded.
+property.tryconnect.failed=Failed.({0})
+property.update.confirm=Do you want to update it?
+property.retry.confirm=Do you want to retry it?
+property.update.cancel=Updating was canceled.
+help =\
+ ---Help(Command List)---\n\
+     help     : This Help\n\
+     a    id  : Adds new Connnector (add)\n\
+     m    id  : Modifles Connnector (modify)\n\
+     r    id  : Removes Connnector (remove)\n\
+     copy A B : Copies Connnector (A to B)\n\
+     disp [id]: Displays Connnector List (all/one)\n\
+     save     : Save \n\
+     load     : Load Connnectors (reset modified Connnectors)\n\
+     exit     : Exit

@@ -1,0 +1,53 @@
+## ContextMenu mappings
+
+# for common
+TextComponent.items=undo,redo,,cut,copy,paste,selectAll
+
+# for DatabaseInfoTree
+DatabaseInfoTree.items=copy,copySimpleName,copyFullName,,refresh,,generateWherePhrase,generateSelectPhrase,generateUpdateStatement,generateInsertStatement,,jumpToColumnByName,toggleShowColumnNumber
+item.copySimpleName=Copy Simple Name
+item.copySimpleName.mnemonic=N
+item.copyFullName=Copy Full Name
+item.copyFullName.mnemonic=F
+item.generateWherePhrase=Generate WHERE Phrase
+item.generateWherePhrase.mnemonic=W
+item.generateSelectPhrase=Generate SELECT Statement (with WHERE)
+item.generateSelectPhrase.mnemonic=S
+item.generateUpdateStatement=Generate UPDATE Statement (with WHERE)
+item.generateUpdateStatement.mnemonic=U
+item.generateInsertStatement=Generate INSERT Statement
+item.generateInsertStatement.mnemonic=I
+item.jumpToColumnByName=Jump To Column By Name
+item.jumpToColumnByName.mnemonic=J
+item.toggleShowColumnNumber=Toggle Show Column Number
+item.toggleShowColumnNumber.mnemonic=T
+
+# for ResultSetTable
+ResultSetTable.items=copy,copyWithEscape,paste,selectAll,,clearSelectedCellValue,setCurrentTimeValue,,copyColumnName,findColumnName,,addEmptyRow,insertFromClipboard,duplicateRows,linkRowsToDatabase,deleteRows
+ResultSetTableColumnHeader.items=sort,,copy,copyWithEscape,paste,selectAll,,copyColumnName,findColumnName,,addEmptyRow,insertFromClipboard,duplicateRows
+item.sort=Sort This Column
+item.sort.mnemonic=S
+item.copyWithEscape=Copy With Escape
+item.copyWithEscape.mnemonic=W
+item.copyColumnName=Copy Column Names
+item.copyColumnName.mnemonic=N
+item.findColumnName=Find Column Names
+item.findColumnName.mnemonic=F
+item.clearSelectedCellValue=Clear Selected Cell Value
+item.clearSelectedCellValue.mnemonic=X
+item.clearSelectedCellValue.shortcut=Delete
+item.setCurrentTimeValue=Set Current Time Value
+item.setCurrentTimeValue.mnemonic=T
+item.addEmptyRow=Add New (Empty) Row
+item.addEmptyRow.mnemonic=E
+item.insertFromClipboard=Insert From Clipboard
+item.insertFromClipboard.mnemonic=I
+item.duplicateRows=Duplicate Rows
+item.duplicateRows.mnemonic=S
+item.linkRowsToDatabase=Link Rows Into Database
+item.linkRowsToDatabase.mnemonic=L
+item.deleteRows=Delete Rows
+item.deleteRows.mnemonic=D
+
+# for ConsoleTextArea
+ConsoleTextArea.items=undo,redo,,cut,copy,paste,selectAll

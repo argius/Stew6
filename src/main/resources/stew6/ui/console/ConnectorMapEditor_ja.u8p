@@ -1,0 +1,44 @@
+
+main.start=接続設定エディタ
+main.wait=コマンドを入力 (help: コマンド一覧を表示)
+main.end=接続設定エディタを終了します。
+main.notice.filenotexists=お知らせ：接続設定ファイルが存在しません。保存時に新規に作成されます。
+proc.prompt =\ >\ 
+proc.added=ID "{0}" を追加しました。
+proc.modified=ID "{0}" を変更しました。
+proc.notexists=ID "{0}" は存在しません。
+proc.alreadyexists=ID "{0}" は既に存在します。
+proc.nomodification=変更はありません。
+proc.remove.confirm=削除してよろしいですか？
+proc.remove.finished=削除しました。
+proc.remove.canceled=削除を中止します。
+proc.copy.finished=コピーしました。
+proc.copy.canceled=コピーを中止します。
+proc.save.confirm=保存してよろしいですか？
+proc.save.finished=保存しました。
+proc.save.canceled=保存を中止しました。
+proc.load.confirm1=復元を実行すると現在の変更は破棄されます。
+proc.load.confirm2=復元しますか？
+proc.load.finished=復元しました。
+proc.load.canceled=復元を中止しました。
+proc.exit.confirm=終了すると、保存されていない変更は破棄されます。よろしいですか？
+property.start1=プロパティの設定。
+property.start2=現在の値を変更しない場合は何も入力しないでENTER
+property.input={0}の入力 (現在の値=[{1}])
+property.tryconnect.confirm=接続試験しますか？
+property.tryconnect.succeeded=成功しました。
+property.tryconnect.failed=失敗しました。({0})
+property.update.confirm=これでよろしいですか？
+property.retry.confirm=変更をやり直しますか？
+property.update.cancel=変更を中止します。
+help =\
+ ---ヘルプ（コマンド一覧）---\n\
+     help     : このヘルプ\n\
+     a    id  : 接続設定の追加(add)\n\
+     m    id  : 接続設定の変更(modify)\n\
+     r    id  : 接続設定の削除(remove)\n\
+     copy A B : 接続設定のコピー\n\
+     disp [id]: 接続設定の表示(一覧/詳細)\n\
+     save     : 接続設定の保存\n\
+     load     : 接続設定の復元（変更をリセット）\n\
+     exit     : 終了

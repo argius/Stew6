@@ -1,0 +1,57 @@
+i.cancelled=The command was canceled.\n(The process in the server-side may be still working.)
+i.choose-connection=Choose Connector
+i.choose-history=Choose a command history of {0} histories
+i.confirm-close=Do you want to close this window?
+i.confirm-commit=Do you want to commit?
+i.confirm-jump-to-web=This command attempts to open the page of the following URL with your web browser, Ok?\n{0}
+i.confirm-overwrite=The file [{0}] already exists. Overwrite it?
+i.confirm-quit=Do you want to exit?
+i.confirm-remove=Do you want to remove it?
+i.confirm-rollback=Do you want to rollback?
+i.confirm-save=Do you want to save it?
+i.confirm-without-register=Do you really want to close without registering?
+i.confirm-without-save=Do you really want to close without saving?
+i.exported=Exported.
+i.can-only-use-after-tablenode-expanded=This command can use only after the table node is expanded.
+i.input-encryption-key=Input an encryption key
+i.input-new-connector-id=<html>Input new connector ID<br> (requires alphanumeric characters) :
+i.paren-in-processing=(IN PROGRESS)
+i.reconnect-after-edited-current-connector=If you want to reflect the change in the current connector, reconnect it.
+i.statusbar-message=\ Execution Time {0} seconds ( {1} )
+w.connector-readonly=This connector is read-only.
+w.import-target-not-available=The destination to import is not available.
+w.no-connector=No Connector.
+w.no-histories=No command histories.
+w.not-connect=Not connected.
+e.cannot-open-help-automatically=Can't open help({0}) automatically on this platform.
+e.enables-select-just-1-table=You can choose only one of tables.
+e.error=Error
+e.error-no-detail=Error(no detail)
+e.file-not-exists=The file [{0}] does not exist.
+e.id-already-exists=The ID [{0}] already exists.
+
+# common menu items
+item.cut=Cut
+item.cut.mnemonic=T
+item.cut.shortcut=ctrl X
+item.copy=Copy
+item.copy.mnemonic=C
+item.copy.shortcut=ctrl C
+item.paste=Paste
+item.paste.mnemonic=P
+item.paste.shortcut=ctrl V
+item.selectAll=Select All
+item.selectAll.mnemonic=A
+item.selectAll.shortcut=ctrl A
+item.undo=Undo
+item.undo.mnemonic=U
+item.undo.shortcut=ctrl Z
+item.redo=Redo
+item.redo.mnemonic=R
+item.redo.shortcut=ctrl Y
+item.refresh=Refresh
+item.refresh.mnemonic=R
+
+# for objects which have no its own message file
+dialog.title.export=Export to file
+dialog.title.import=Import from datafile
