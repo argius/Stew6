@@ -2,6 +2,7 @@ package stew6;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.*;
 import org.yaml.snakeyaml.*;
 import org.yaml.snakeyaml.DumperOptions.*;
 import org.yaml.snakeyaml.nodes.*;
@@ -15,7 +16,8 @@ final class ConnectorsConfigFile {
     static ConnectorsConfig read() throws IOException {
         Yaml yaml = new Yaml();
         try (InputStream is = Files.newInputStream(getPath())) {
-            return yaml.loadAs(is, ConnectorsConfig.class);
+            ConnectorsConfig cfg = yaml.loadAs(is, ConnectorsConfig.class);
+            return Optional.ofNullable(cfg).orElseGet(() -> new ConnectorsConfig());
         }
     }
 
@@ -41,6 +43,8 @@ final class ConnectorsConfigFile {
     static long getLastModified() {
         try {
             return Files.getLastModifiedTime(getPath()).toMillis();
+        } catch (NoSuchFileException e) {
+            return 0L;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
