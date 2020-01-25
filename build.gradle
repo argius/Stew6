@@ -23,6 +23,17 @@ repositories {
 	mavenCentral()
 }
 
+jar {
+    baseName = 'stew'
+    manifest {
+        attributes 'Main-Class' : baseName + '6.App'
+    }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    doLast {
+        file('$destinationDir/$archiveName').renameTo('$destinationDir/$baseName-$version.jar')
+    }
+}
+
 dependencies {
 	implementation 'org.apache.commons:commons-lang3:3.9'
     implementation 'commons-io:commons-io:2.6'
