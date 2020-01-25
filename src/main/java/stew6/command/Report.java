@@ -7,6 +7,7 @@ import stew6.*;
 /**
  * The Report command used to show database informations.
  */
+@SuppressWarnings("resource")
 public final class Report extends Command {
 
     private static final Logger log = Logger.getLogger(Report.class);
@@ -21,8 +22,7 @@ public final class Report extends Command {
             if (p1.equals("-")) {
                 reportDBInfo(conn);
             } else {
-                ResultSetReference ref = getResult(conn, p);
-                try (ResultSet rs = ref.getResultSet()) {
+                try (ResultSetReference ref = getResult(conn, p)) {
                     output(ref);
                     outputMessage("i.selected", ref.getRecordCount());
                 }
@@ -64,8 +64,7 @@ public final class Report extends Command {
         }
     }
 
-    private ResultSetReference getTableFullDescription(DatabaseMetaData dbmeta,
-                                                       String tableName,
+    private ResultSetReference getTableFullDescription(DatabaseMetaData dbmeta, String tableName,
                                                        String cmd) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("report table-full-description of : " + tableName);
@@ -79,8 +78,7 @@ public final class Report extends Command {
         }
     }
 
-    private ResultSetReference getTableDescription(DatabaseMetaData dbmeta,
-                                                   String tableName,
+    private ResultSetReference getTableDescription(DatabaseMetaData dbmeta, String tableName,
                                                    String cmd) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("report table-description of : " + tableName);
@@ -102,8 +100,7 @@ public final class Report extends Command {
         }
     }
 
-    private ResultSetReference getPrimaryKeyInfo(DatabaseMetaData dbmeta,
-                                                 String tableName,
+    private ResultSetReference getPrimaryKeyInfo(DatabaseMetaData dbmeta, String tableName,
                                                  String cmd) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("report primary-key of : " + tableName);
@@ -152,13 +149,8 @@ public final class Report extends Command {
         }
         DatabaseMetaData meta = conn.getMetaData();
         final String userName = meta.getUserName();
-        outputMessage("Report.dbinfo",
-                      meta.getDatabaseProductName(),
-                      meta.getDatabaseProductVersion(),
-                      meta.getDriverName(),
-                      meta.getDriverVersion(),
-                      (userName == null) ? "" : userName,
-                      meta.getURL());
+        outputMessage("Report.dbinfo", meta.getDatabaseProductName(), meta.getDatabaseProductVersion(),
+                      meta.getDriverName(), meta.getDriverVersion(), (userName == null) ? "" : userName, meta.getURL());
     }
 
     private static String getColumnName(String key) {

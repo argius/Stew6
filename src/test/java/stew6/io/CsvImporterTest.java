@@ -8,6 +8,7 @@ import org.junit.*;
 public final class CsvImporterTest {
 
     @Test
+    @SuppressWarnings("resource")
     public void testNextRow() throws IOException {
         CsvImporter importer = csv("name1,123%nname2,\"456 \"");
         assertArrayEquals0(a("name1", "123"), importer.nextRow());
@@ -16,6 +17,7 @@ public final class CsvImporterTest {
     }
 
     @Test
+    @SuppressWarnings("resource")
     public void testGetHeader() throws IOException {
         CsvImporter csvi = csv("name,number%nname1,135%nname2,246%n");
         assertArrayEquals0(a("name", "number"), csvi.getHeader());
@@ -29,6 +31,7 @@ public final class CsvImporterTest {
     }
 
     @Test
+    @SuppressWarnings("resource")
     public void testClose() {
         CsvImporter csvi1 = csv("");
         try {

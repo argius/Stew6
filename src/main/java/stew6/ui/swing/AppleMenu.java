@@ -11,14 +11,11 @@ import stew6.*;
 final class AppleMenu {
 
     private static final Logger log = Logger.getLogger(Menu.class);
-    private static final ResourceManager res = ResourceManager.getInstance(Menu.class);
 
     private AppleMenu() {
     }
 
-    public static void customize(Menu menu,
-                                 int javaMajorVersion,
-                                 Map<String, JMenuItem> itemMap,
+    public static void customize(Menu menu, int javaMajorVersion, Map<String, JMenuItem> itemMap,
                                  final AnyActionListener anyActionListener) {
         log.info("customizing for macOS, java version=%d", javaMajorVersion);
         ScriptEngine se = new ScriptEngineManager().getEngineByExtension("js");
@@ -31,6 +28,7 @@ final class AppleMenu {
             log.debug("OrangeMenu.applyCustomize() version 8-");
             gettingAppCode = "com.apple.eawt.Application.getApplication()";
         }
+        // @formatter:off
         final String s;
         s = ""
             + "var app = "
@@ -49,6 +47,7 @@ final class AppleMenu {
             + "});"
             + "d.setupDockerIcon();"
             + "";
+        // @formatter:on
         try {
             se.eval(s);
         } catch (ScriptException e) {
@@ -73,9 +72,7 @@ final class AppleMenu {
             this.anyActionListener = anyActionListener;
         }
         public boolean confirmQuitAndYes() {
-            return JOptionPane.showConfirmDialog(parent,
-                                                 res.get("i.confirm-quit"),
-                                                 "",
+            return JOptionPane.showConfirmDialog(parent, WindowLauncher.res.s("i.confirm-quit"), "",
                                                  JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
         }
         public void quit() {

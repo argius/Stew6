@@ -2,12 +2,12 @@ package stew6.ui.swing;
 
 import static java.sql.Types.*;
 import static java.util.Collections.nCopies;
-import static stew6.text.TextUtilities.join;
 import java.sql.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
+import java.util.stream.*;
 import javax.swing.table.*;
 import stew6.*;
 
@@ -34,6 +34,7 @@ final class ResultSetTableModel extends DefaultTableModel {
 
     ResultSetTableModel(ResultSetReference ref) throws SQLException {
         super(0, getColumnCount(ref));
+        @SuppressWarnings("resource")
         ResultSet rs = ref.getResultSet();
         ColumnOrder order = ref.getOrder();
         final String cmd = ref.getCommandString();
@@ -73,21 +74,6 @@ final class ResultSetTableModel extends DefaultTableModel {
             super(initialCapacity);
         }
 
-        @SuppressWarnings("unused")
-        @Deprecated
-        UnlinkedRow(Vector<?> rowData) {
-            super(rowData);
-        }
-
-        @SuppressWarnings("unused")
-        @Deprecated
-        UnlinkedRow(Object[] rowData) {
-            super(rowData.length);
-            for (final Object o : rowData) {
-                add(o);
-            }
-        }
-
     }
 
     private static int getColumnCount(ResultSetReference ref) throws SQLException {
@@ -104,6 +90,7 @@ final class ResultSetTableModel extends DefaultTableModel {
                 return Object.class;
             case BIT:
                 return Object.class; // XXX ad-hoc workaround
+            default:
         }
         return SqlTypes.toClass(types[columnIndex]);
     }
@@ -329,40 +316,27 @@ final class ResultSetTableModel extends DefaultTableModel {
     }
 
     private void executeUpdate(Map<Object, Object> keyMap, Object targetKey, Object targetValue) throws SQLException {
-        final String sql = String.format("UPDATE %s SET %s=? WHERE %s",
-                                         tableName,
-                                         quoteIfNeeds(targetKey),
+        final String sql = String.format("UPDATE %s SET %s=? WHERE %s", tableName, quoteIfNeeds(targetKey),
                                          toKeyPhrase(primaryKeys));
-        List<Object> a = new ArrayList<>();
-        a.add(targetValue);
-        for (Object pk : primaryKeys) {
-            a.add(keyMap.get(pk));
-        }
-        executeSql(sql, a.toArray());
+        executeSql(sql, Stream.concat(Stream.of(targetValue), Stream.of(primaryKeys).map(keyMap::get)).toArray());
     }
 
     private void executeInsert(Map<Object, Object> rowData) throws SQLException {
         final int dataSize = rowData.size();
-        List<Object> keys = new ArrayList<>(dataSize);
+        List<String> keys = new ArrayList<>(dataSize);
         List<Object> values = new ArrayList<>(dataSize);
         for (Entry<?, ?> entry : rowData.entrySet()) {
             keys.add(quoteIfNeeds(String.valueOf(entry.getKey())));
             values.add(entry.getValue());
         }
-        final String sql = String.format("INSERT INTO %s (%s) VALUES (%s)",
-                                         tableName,
-                                         join(",", keys),
-                                         join(",", nCopies(dataSize, "?")));
+        final String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, String.join(",", keys),
+                                         String.join(",", nCopies(dataSize, "?")));
         executeSql(sql, values.toArray());
     }
 
     private void executeDelete(Map<Object, Object> keyMap) throws SQLException {
         final String sql = String.format("DELETE FROM %s WHERE %s", tableName, toKeyPhrase(primaryKeys));
-        List<Object> a = new ArrayList<>();
-        for (Object pk : primaryKeys) {
-            a.add(keyMap.get(pk));
-        }
-        executeSql(sql, a.toArray());
+        executeSql(sql, Stream.of(primaryKeys).map(keyMap::get).toArray());
     }
 
     private void executeSql(final String sql, final Object[] parameters) throws SQLException {
@@ -380,7 +354,7 @@ final class ResultSetTableModel extends DefaultTableModel {
             public void run() {
                 try {
                     if (conn.isClosed()) {
-                        throw new SQLException(ResourceManager.Default.get("e.not-connect"));
+                        throw new SQLException(App.res.s("e.not-connect"));
                     }
                     try (final PreparedStatement stmt = conn.prepareStatement(sql)) {
                         ValueTransporter transporter = ValueTransporter.getInstance("");
@@ -449,11 +423,7 @@ final class ResultSetTableModel extends DefaultTableModel {
     }
 
     private static String toKeyPhrase(Object[] keys) {
-        List<String> a = new ArrayList<>(keys.length);
-        for (final Object key : keys) {
-            a.add(String.format("%s=?", key));
-        }
-        return join(" AND ", a);
+        return Stream.of(keys).map(x -> x + "=?").collect(Collectors.joining(" AND "));
     }
 
     private static String quoteIfNeeds(Object o) {
@@ -464,6 +434,7 @@ final class ResultSetTableModel extends DefaultTableModel {
         return s;
     }
 
+    @SuppressWarnings("resource")
     private void analyzeForLinking(ResultSet rs, String cmd) throws SQLException {
         if (rs == null) {
             return;
@@ -587,9 +558,7 @@ final class ResultSetTableModel extends DefaultTableModel {
         return a;
     }
 
-    private static List<String> getPrimaryKeys(DatabaseMetaData dbmeta,
-                                               String catalog,
-                                               String schema,
+    private static List<String> getPrimaryKeys(DatabaseMetaData dbmeta, String catalog, String schema,
                                                String table) throws SQLException {
         try (ResultSet rs = dbmeta.getPrimaryKeys(catalog, schema, table)) {
             List<String> pkList = new ArrayList<>();

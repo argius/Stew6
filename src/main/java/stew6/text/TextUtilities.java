@@ -10,7 +10,7 @@ public final class TextUtilities {
     private TextUtilities() {
     } // forbidden
 
-
+    @Deprecated
     public static String join(String delimiter, Collection<?> a) {
         if (a.isEmpty()) {
             return "";

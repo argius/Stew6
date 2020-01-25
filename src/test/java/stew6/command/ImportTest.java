@@ -11,7 +11,8 @@ import net.argius.stew.*;
 import stew6.*;
 import stew6.io.*;
 
-public class ImportTest {
+@SuppressWarnings("resource")
+public final class ImportTest {
 
     @Rule
     public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -96,7 +97,7 @@ public class ImportTest {
         Import cmdImport = (Import)cmd;
         File f = tmpFolder.newFile(testName + ".csv");
         try (Connection conn = connection()) {
-            TestUtils.writeLines(f.toPath(), "1");
+            TestUtils.writeLines(f.toPath(), "1,ABC");
             PreparedStatement stmt = conn.prepareStatement("insert into table1 values (?, ?)");
             thrown.expect(SQLException.class);
             try (Importer importer = Importer.getImporter(f)) {

@@ -5,11 +5,10 @@ import static java.awt.event.InputEvent.*;
 import static java.awt.event.KeyEvent.VK_C;
 import static java.util.Collections.*;
 import static javax.swing.KeyStroke.getKeyStroke;
-import static stew6.text.TextUtilities.join;
 import static stew6.ui.swing.AnyActionKey.*;
 import static stew6.ui.swing.AnyActionKey.copy;
 import static stew6.ui.swing.DatabaseInfoTree.ActionKey.*;
-import static stew6.ui.swing.WindowOutputProcessor.showInformationMessageDialog;
+import static stew6.ui.swing.WindowOutputProcessor.showWideMessageDialog;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -18,9 +17,11 @@ import java.text.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.*;
+import java.util.stream.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
+import minestra.text.*;
 import stew6.*;
 
 /**
@@ -42,7 +43,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
 
     static final Logger log = Logger.getLogger(DatabaseInfoTree.class);
 
-    private static final ResourceManager res = ResourceManager.getInstance(DatabaseInfoTree.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(DatabaseInfoTree.class);
 
     private static final String TABLE_TYPE_TABLE = "TABLE";
     private static final String TABLE_TYPE_VIEW = "VIEW";
@@ -135,7 +136,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                     }
                 }
             } catch (IllegalArgumentException ex) {
-                showInformationMessageDialog(this, ex.getMessage(), "");
+                showWideMessageDialog(this, ex.getMessage());
             }
         } else if (ev.isAnyOf(jumpToColumnByName)) {
             jumpToColumnByName();
@@ -146,7 +147,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
             try {
                 showLimitedRecords();
             } catch (SQLException ex) {
-                showInformationMessageDialog(this, ex.getMessage(), "");
+                showWideMessageDialog(this, ex.getMessage());
             }
         } else {
             log.warn("not expected: Event=%s", ev);
@@ -240,7 +241,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
             }
         }
         if (c >= 1) {
-            return String.format("%s;%s", phrase, join("", nCopies(c - 1, ",")));
+            return String.format("%s;%s", phrase, String.join("", nCopies(c - 1, ",")));
         }
         return phrase;
     }
@@ -280,7 +281,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
             }
             expressions.addAll(expressions2);
         }
-        return String.format("%s", join(" AND ", expressions));
+        return String.format("%s", String.join(" AND ", expressions));
     }
 
     static String generateSelectPhrase(List<TreeNode> nodes) {
@@ -325,7 +326,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                 }
             }
         }
-        return String.format("SELECT %s FROM %s", join(", ", columnNames), join(", ", tableNames));
+        return String.format("SELECT %s FROM %s", String.join(", ", columnNames), String.join(", ", tableNames));
     }
 
     static String generateUpdateOrInsertPhrase(List<TreeNode> nodes, boolean isInsert) {
@@ -347,9 +348,9 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
             return "";
         }
         if (tableNames.size() >= 2) {
-            throw new IllegalArgumentException(res.get("e.enables-select-just-1-table"));
+            throw new IllegalArgumentException(res.s("e.enables-select-just-1-table"));
         }
-        final String tableName = join("", tableNames);
+        final String tableName = String.join("", tableNames);
         List<String> columnsInTable = columnMap.get(tableName);
         if (columnsInTable.isEmpty()) {
             if (isInsert) {
@@ -362,7 +363,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                 }
                 TableNode tableNode = tableNodes.get(0);
                 if (tableNode.getChildCount() == 0) {
-                    throw new IllegalArgumentException(res.get("i.can-only-use-after-tablenode-expanded"));
+                    throw new IllegalArgumentException(res.s("i.can-only-use-after-tablenode-expanded"));
                 }
                 for (int i = 0, n = tableNode.getChildCount(); i < n; i++) {
                     ColumnNode child = (ColumnNode)tableNode.getChildAt(i);
@@ -375,16 +376,11 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         final String phrase;
         if (isInsert) {
             final int columnCount = columnsInTable.size();
-            phrase = String.format("INSERT INTO %s (%s) VALUES (%s)",
-                                   tableName,
-                                   join(",", columnsInTable),
-                                   join(",", nCopies(columnCount, "?")));
+            phrase = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, String.join(",", columnsInTable),
+                                   String.join(",", nCopies(columnCount, "?")));
         } else {
-            List<String> columnExpressions = new ArrayList<>();
-            for (final String columnName : columnsInTable) {
-                columnExpressions.add(columnName + "=?");
-            }
-            phrase = String.format("UPDATE %s SET %s", tableName, join(", ", columnExpressions));
+            phrase = String.format("UPDATE %s SET %s", tableName,
+                                   columnsInTable.stream().map(x -> x + "=?").collect(Collectors.joining(", ")));
         }
         return phrase;
     }
@@ -572,7 +568,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                 if (target != null && target.toString().equals(s)) {
                     if (!isExpanded(target)) {
                         aa.doLater("expandLater", target);
-                        Utilities.sleep(200L);
+                        App.sleepMillis(200L);
                     }
                     index++;
                     break;
@@ -619,7 +615,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
             return;
         }
         final DefaultTreeModel model = (DefaultTreeModel)getModel();
-        final DefaultMutableTreeNode tmpNode = new DefaultMutableTreeNode(res.get("i.paren-in-processing"));
+        final DefaultMutableTreeNode tmpNode = new DefaultMutableTreeNode(res.s("i.paren-in-processing"));
         // asynchronous
         class NodeExpansionTask implements Runnable {
             @Override
@@ -699,13 +695,8 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         }
 
         @Override
-        public Component getTreeCellRendererComponent(JTree tree,
-                                                      Object value,
-                                                      boolean sel,
-                                                      boolean expanded,
-                                                      boolean leaf,
-                                                      int row,
-                                                      boolean hasFocus) {
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+                                                      boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             if (value instanceof InfoNode) {
                 ImageIcon icon = Utilities.getImageIcon(((InfoNode)value).getIconName());
@@ -752,8 +743,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
             return String.valueOf(userObject);
         }
 
-        static List<TableTypeNode> getTableTypeNodes(DatabaseMetaData dbmeta,
-                                                     String catalog,
+        static List<TableTypeNode> getTableTypeNodes(DatabaseMetaData dbmeta, String catalog,
                                                      String schema) throws SQLException {
             List<String> tableTypes = new ArrayList<>(DEFAULT_TABLE_TYPES);
             try (ResultSet rs = dbmeta.getTableTypes()) {
@@ -962,7 +952,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                 a.add(schema);
             }
             a.add(name);
-            return join(".", a);
+            return String.join(".", a);
         }
 
         String getName() {

@@ -8,10 +8,9 @@ import org.apache.commons.cli.*;
  */
 public final class OptionSet {
 
-    private static final ResourceManager res = ResourceManager.getInstance(OptionSet.class);
-
     private boolean cui;
     private boolean gui;
+    private boolean fx;
     private boolean edit;
     private String connecterName;
     private String commandString;
@@ -33,10 +32,10 @@ public final class OptionSet {
     public static void showHelp() {
         final String eol = String.format("%n");
         HelpFormatter hf = new HelpFormatter();
-        hf.setSyntaxPrefix(res.get("i.usagePrefix"));
-        String syntax = res.get("i.usage.syntax");
-        String header = eol + res.get("help.header");
-        String footer = eol + res.get("help.footer");
+        hf.setSyntaxPrefix(App.res.s("i.usagePrefix"));
+        String syntax = App.res.s("i.usage.syntax");
+        String header = eol + App.res.s("help.header");
+        String footer = eol + App.res.s("help.footer");
         hf.printHelp(80, syntax, header, newParser().getOptions(), footer, false);
     }
 
@@ -46,6 +45,10 @@ public final class OptionSet {
 
     public boolean isGui() {
         return gui;
+    }
+
+    public boolean isFx() {
+        return fx;
     }
 
     public boolean isEdit() {
@@ -81,6 +84,7 @@ public final class OptionSet {
 
         private static final String OPTION_CUI = "cui";
         private static final String OPTION_GUI = "gui";
+        private static final String OPTION_FX = "fx";
         private static final String OPTION_EDIT = "edit";
         private static final String OPTION_CONNECT = "connect";
         private static final String OPTION_QUIET = "quiet";
@@ -93,6 +97,7 @@ public final class OptionSet {
             this.options = new Options();
             option(OPTION_CUI);
             option(OPTION_GUI);
+            option(OPTION_FX);
             option(OPTION_EDIT);
             option(OPTION_CONNECT, "c", true);
             option(OPTION_QUIET, "q");
@@ -110,6 +115,7 @@ public final class OptionSet {
             CommandLine cl = parser.parse(options, args, true);
             o.cui = bool(cl, OPTION_CUI);
             o.gui = bool(cl, OPTION_GUI);
+            o.fx = bool(cl, OPTION_FX);
             o.edit = bool(cl, OPTION_EDIT);
             o.connecterName = getConnectorName(cl);
             o.quiet = bool(cl, OPTION_QUIET);
@@ -151,7 +157,7 @@ public final class OptionSet {
         }
 
         Option option(String optionKey, String shortKey, boolean requiresArgument) {
-            String desc = res.get("opt." + optionKey);
+            String desc = App.res.s("opt." + optionKey);
             Option opt = new Option(shortKey, optionKey, requiresArgument, desc);
             options.addOption(opt);
             return opt;
@@ -166,10 +172,8 @@ public final class OptionSet {
         static List<String> stringValues(CommandLine cl, String optionKey) {
             String[] values = cl.getOptionValues(optionKey);
             String[] a = (values == null) ? new String[0] : values;
-            log.debug(String.format("option: hasOption=%s, key=%s, values=%s",
-                                    (cl.hasOption(optionKey) ? "T" : "F"),
-                                    optionKey,
-                                    Arrays.toString(a)));
+            log.debug(String.format("option: hasOption=%s, key=%s, values=%s", (cl.hasOption(optionKey) ? "T" : "F"),
+                                    optionKey, Arrays.toString(a)));
             return Arrays.asList(a);
         }
 

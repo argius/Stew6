@@ -109,6 +109,7 @@ public final class XmlImporter extends Importer {
                 return evt.asStartElement().getName().getLocalPart().equals(name);
             case XMLEvent.END_ELEMENT:
                 return evt.asEndElement().getName().getLocalPart().equals(name);
+            default:
         }
         throw new IllegalStateException("unexpected event: " + evt);
     }

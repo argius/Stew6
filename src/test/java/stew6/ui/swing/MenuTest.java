@@ -8,12 +8,13 @@ import java.lang.reflect.*;
 import java.util.*;
 import javax.swing.*;
 import org.junit.*;
+import minestra.text.*;
 import stew6.*;
 
 // Notice: It doesn't work in headless environments
 public final class MenuTest {
 
-    private static final ResourceManager res = ResourceManager.getInstance(Menu.class);
+    private static final ResourceSheaf res = WindowLauncher.res.withClass(Menu.class);
 
     @Test
     public void testPropertyChange() {
@@ -147,10 +148,7 @@ public final class MenuTest {
         assertFalse(item4.isSelected());
     }
 
-    private static void firePropertyChange(Menu menu,
-                                           Object src,
-                                           String propertyName,
-                                           Object oldValue,
+    private static void firePropertyChange(Menu menu, Object src, String propertyName, Object oldValue,
                                            Object newValue) {
         menu.propertyChange(new PropertyChangeEvent(src, propertyName, oldValue, newValue));
     }
@@ -182,7 +180,8 @@ public final class MenuTest {
                 out.println("sendCommit = ctrl shift K");
                 out.println("sendRollback = ctrl shift R");
             }
-            a = createJMenuItems(res, "group.command");
+            MenuItemFactory mif = new MenuItemFactory(res);
+            a = mif.createJMenuItems("group.command");
         } finally {
             assertTrue(keyBindConf.delete());
         }
@@ -209,7 +208,8 @@ public final class MenuTest {
             return; // skip test
         }
         Map<String, JMenuItem> m = new HashMap<>();
-        List<JMenuItem> a = createJMenuItems(res, m, "group.data");
+        MenuItemFactory mif = new MenuItemFactory(res);
+        List<JMenuItem> a = mif.createJMenuItems(m, "group.data");
         JMenuItem menuSortResult = m.get("sortResult");
         assertEquals(3, a.size());
         assertEquals("sortResult", menuSortResult.getActionCommand());
@@ -221,7 +221,8 @@ public final class MenuTest {
         if (TestUtils.isInHeadless()) {
             return; // skip test
         }
-        JMenuItem menuSortResult = createJMenuItem(res, "sortResult");
+        MenuItemFactory mif = new MenuItemFactory(res);
+        JMenuItem menuSortResult = mif.createJMenuItem("sortResult");
         assertEquals("sortResult", menuSortResult.getActionCommand());
         assertEquals("alt pressed S", menuSortResult.getAccelerator().toString());
     }

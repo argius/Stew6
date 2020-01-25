@@ -5,7 +5,12 @@ package stew6.ui.swing;
  */
 public enum AnyActionKey {
 
-    cut, copy, paste, selectAll, undo, redo,
+    cut,
+    copy,
+    paste,
+    selectAll,
+    undo,
+    redo,
     //
     execute,
     refresh,

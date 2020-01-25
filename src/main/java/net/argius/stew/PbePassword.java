@@ -17,8 +17,7 @@ public final class PbePassword extends CipherPassword {
     protected Cipher getCipherInstance(String code, int mode) {
         try {
             PBEKeySpec keySpec = new PBEKeySpec(code.toCharArray());
-            SecretKey key = SecretKeyFactory.getInstance(TRANSFORMATION_NAME)
-                                            .generateSecret(keySpec);
+            SecretKey key = SecretKeyFactory.getInstance(TRANSFORMATION_NAME).generateSecret(keySpec);
             PBEParameterSpec spec = new PBEParameterSpec(SALT, ITERATION);
             Cipher cipher = Cipher.getInstance(TRANSFORMATION_NAME);
             cipher.init(mode, key, spec);

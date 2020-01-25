@@ -324,19 +324,17 @@ final class ResultSetTable extends JTable implements AnyActionListener, TextSear
                 m.addUnlinkedRow(new Object[m.getColumnCount()]);
             }
         } else if (ev.isAnyOf(insertFromClipboard)) {
-            try {
-                try (Importer importer = new CsvImporter(ClipboardHelper.getReaderForText(), TAB_CHAR)) {
-                    ResultSetTableModel m = getResultSetTableModel();
-                    while (true) {
-                        Object[] row = importer.nextRow();
-                        if (row.length == 0) {
-                            break;
-                        }
-                        m.addUnlinkedRow(row);
-                        m.linkRow(m.getRowCount() - 1);
+            try (Importer importer = new CsvImporter(ClipboardHelper.getReaderForText(), TAB_CHAR)) {
+                ResultSetTableModel m = getResultSetTableModel();
+                while (true) {
+                    Object[] row = importer.nextRow();
+                    if (row.length == 0) {
+                        break;
                     }
-                    repaintRowHeader("model");
+                    m.addUnlinkedRow(row);
+                    m.linkRow(m.getRowCount() - 1);
                 }
+                repaintRowHeader("model");
             } finally {
                 editingCanceled(new ChangeEvent(ev.getSource()));
             }
@@ -704,12 +702,8 @@ final class ResultSetTable extends JTable implements AnyActionListener, TextSear
         } // empty
 
         @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
             Component c = super.getTableCellRendererComponent(table, "NULL", isSelected, hasFocus, row, column);
             c.setForeground(new Color(63, 63, 192, 192));
             Font font = c.getFont();
@@ -730,12 +724,8 @@ final class ResultSetTable extends JTable implements AnyActionListener, TextSear
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                                                       int row, int column) {
             Object o = fixesColumnNumber ? String.format("%d %s", column + 1, value) : value;
             return renderer.getTableCellRendererComponent(table, o, isSelected, hasFocus, row, column);
         }
@@ -759,12 +749,8 @@ final class ResultSetTable extends JTable implements AnyActionListener, TextSear
             final ResultSetTable t = (ResultSetTable)table;
             this.renderer = new DefaultTableCellRenderer() {
                 @Override
-                public Component getTableCellRendererComponent(JTable table,
-                                                               Object value,
-                                                               boolean isSelected,
-                                                               boolean hasFocus,
-                                                               int row,
-                                                               int column) {
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                               boolean hasFocus, int row, int column) {
                     assert t.getModel() instanceof ResultSetTableModel;
                     final boolean rowLinked = t.getResultSetTableModel().isLinkedRow(row);
                     JLabel label = new JLabel(String.format("%s ", rowLinked ? row + 1 : "+"));
@@ -1006,11 +992,7 @@ final class ResultSetTable extends JTable implements AnyActionListener, TextSear
                     renderer = header.getDefaultRenderer();
                 }
                 if (renderer != null) {
-                    Component c = renderer.getTableCellRendererComponent(this,
-                                                                         column.getHeaderValue(),
-                                                                         false,
-                                                                         false,
-                                                                         0,
+                    Component c = renderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0,
                                                                          columnIndex);
                     size = c.getPreferredSize().width * 1.5f;
                 }
@@ -1022,11 +1004,7 @@ final class ResultSetTable extends JTable implements AnyActionListener, TextSear
                         continue;
                     }
                     Object value = getValueAt(rowIndex, columnIndex);
-                    Component c = renderer.getTableCellRendererComponent(this,
-                                                                         value,
-                                                                         false,
-                                                                         false,
-                                                                         rowIndex,
+                    Component c = renderer.getTableCellRendererComponent(this, value, false, false, rowIndex,
                                                                          columnIndex);
                     size = Math.max(size, c.getPreferredSize().width);
                     if (size >= max) {

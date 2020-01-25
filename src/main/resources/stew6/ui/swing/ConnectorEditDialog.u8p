@@ -3,6 +3,8 @@ connector.id=Connnector ID
 connector.name=Connnector Name
 connector.classpath=Classpath
 button.searchFile=Search File
+connector.classpathref=Classpathref
+button.chooseClasspathref=Choose
 connector.driver=Driver
 button.searchDriver=Search Driver
 connector.url=URL to connect
@@ -26,3 +28,4 @@ Version: {1}
 search.driver.classnotfound=Driver class was not found.
 button.referToOthers=Refer to other configs
 dialog.referToOthers.message=Copy selected infos to empty cells.
+dialog.chooseClasspathref.message=Choose classpathref

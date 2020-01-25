@@ -1,7 +1,6 @@
 package stew6.ui.swing;
 
 import static stew6.ui.swing.Menu.Item.*;
-import static stew6.ui.swing.Utilities.getImageIcon;
 import java.awt.*;
 import java.beans.*;
 import java.io.*;
@@ -10,6 +9,7 @@ import java.util.List;
 import java.util.Map.*;
 import java.util.regex.*;
 import javax.swing.*;
+import minestra.text.*;
 import stew6.*;
 
 /**
@@ -17,8 +17,8 @@ import stew6.*;
  */
 final class Menu extends JMenuBar implements PropertyChangeListener {
 
-    private static final ResourceManager res = ResourceManager.getInstance(Menu.class);
-    private static final boolean autoMnemonic = checkAutoMnemonicIsAvailable();
+    private static final Logger log = Logger.getLogger(Menu.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(Menu.class);
 
     /**
      * Menu Items.
@@ -87,9 +87,10 @@ final class Menu extends JMenuBar implements PropertyChangeListener {
         this.itemToCompMap = new EnumMap<>(Item.class);
         Map<String, JMenuItem> itemMap = new HashMap<>();
         AnyAction aa = new AnyAction(anyActionListener);
-        for (final String groupId : res.get("groups").split(",", -1)) {
-            JMenu m = add(createJMenu(res, groupId));
-            for (final JMenuItem o : createJMenuItems(res, itemMap, "group." + groupId)) {
+        MenuItemFactory mif = new MenuItemFactory(res);
+        for (final String groupId : res.s("groups").split(",", -1)) {
+            JMenu m = add(mif.createJMenu(groupId));
+            for (final JMenuItem o : mif.createJMenuItems(itemMap, "group." + groupId)) {
                 if (o == null) {
                     m.add(new JSeparator());
                     continue;
@@ -205,15 +206,6 @@ final class Menu extends JMenuBar implements PropertyChangeListener {
 
     // Menu factory utilities
 
-    private static JMenu createJMenu(ResourceManager rm, String groupId) {
-        final String key = (rm.containsKey("group." + groupId) ? "group" : "item") + '.' + groupId;
-        final char mn = rm.getChar(key + ".mnemonic");
-        final String groupString = rm.get(key) + (autoMnemonic ? "(" + mn + ")" : "");
-        JMenu group = new JMenu(groupString);
-        group.setMnemonic(mn);
-        return group;
-    }
-
     private static void refreshAllAccelerators(Map<String, JMenuItem> itemMap) {
         // This method is called everytime menu and popup-menu is created.
         File keyBindConf = App.getSystemFile("keybind.conf");
@@ -244,69 +236,8 @@ final class Menu extends JMenuBar implements PropertyChangeListener {
         }
     }
 
-    static List<JMenuItem> createJMenuItems(ResourceManager rm, String groupKey) {
-        HashMap<String, JMenuItem> itemMap = new HashMap<>();
-        List<JMenuItem> a = createJMenuItems(rm, itemMap, groupKey);
-        refreshAllAccelerators(itemMap);
-        return a;
-    }
-
-    static List<JMenuItem> createJMenuItems(ResourceManager rm, Map<String, JMenuItem> itemMap, String groupKey) {
-        List<JMenuItem> a = new ArrayList<>();
-        for (final String itemId : rm.get(groupKey + ".items").split(",", -1)) {
-            if (itemId.length() == 0) {
-                a.add(null);
-            } else {
-                JMenuItem o = createJMenuItem(rm, itemId);
-                a.add(o);
-                itemMap.put(itemId, o);
-            }
-        }
-        return a;
-    }
-
-    static JMenuItem createJMenuItem(ResourceManager rm, String itemId) {
-        final String itemKey = "item." + itemId;
-        final char mn = rm.getChar(itemKey + ".mnemonic");
-        final String shortcutKey = itemKey + ".shortcut";
-        final JMenuItem o;
-        if (rm.isTrue(itemKey + ".checkbox")) {
-            o = new JCheckBoxMenuItem();
-        } else if (rm.isTrue(itemKey + ".subgroup")) {
-            o = createJMenu(rm, itemId);
-            ButtonGroup buttonGroup = new ButtonGroup();
-            boolean selected = false;
-            for (final String id : rm.get(itemKey + ".items").split(",", -1)) {
-                final JMenuItem sub = createJMenuItem(rm, itemId + id);
-                o.add(sub);
-                buttonGroup.add(sub);
-                if (!selected) {
-                    sub.setSelected(true);
-                    selected = true;
-                }
-            }
-        } else {
-            o = new JMenuItem();
-        }
-        if (rm.containsKey(shortcutKey)) {
-            KeyStroke ks = Utilities.getKeyStroke(rm.get(shortcutKey));
-            if (ks != null) {
-                o.setAccelerator(ks);
-            }
-        }
-        o.setText(rm.get(itemKey) + (autoMnemonic ? "(" + mn + ")" : ""));
-        o.setMnemonic(mn);
-        o.setActionCommand(itemId);
-        o.setIcon(getImageIcon(String.format("menu-%s.png", itemId)));
-        o.setDisabledIcon(getImageIcon(String.format("menu-disabled-%s.png", itemId)));
-        return o;
-    }
-
-    private static boolean checkAutoMnemonicIsAvailable() {
-        return !App.props.getAsBoolean("ui.suppressGenerateMnemonic") && res.getInt("auto-mnemonic") == 1;
-    }
-
     private void customize(Map<String, JMenuItem> itemMap, final AnyActionListener anyActionListener) {
+        log.debug("customize:start");
         try {
             final String javaVersionString = System.getProperty("java.runtime.version", "0");
             final int javaMajorVersion = Integer.parseInt(javaVersionString.replaceFirst("^(\\d+).+?$", "$1"));
@@ -316,6 +247,7 @@ final class Menu extends JMenuBar implements PropertyChangeListener {
         } catch (Throwable th) {
             WindowOutputProcessor.showErrorDialog(this.getParent(), th);
         }
+        log.debug("customize:end");
     }
 
 }

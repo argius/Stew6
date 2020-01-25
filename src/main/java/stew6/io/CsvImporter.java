@@ -19,7 +19,9 @@ public final class CsvImporter extends Importer {
 
     public CsvImporter(InputStream is, char delimiter) {
         super(is);
-        this.parser = parser(new InputStreamReader(is), delimiter);
+        @SuppressWarnings("resource")
+        InputStreamReader r = new InputStreamReader(is);
+        this.parser = parser(r, delimiter);
         this.iterator = parser.iterator();
     }
 
@@ -27,6 +29,7 @@ public final class CsvImporter extends Importer {
         this(r, ',');
     }
 
+    @SuppressWarnings("all")
     public CsvImporter(Reader r, char delimiter) {
         super(new InputStream() {
             @Override

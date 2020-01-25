@@ -9,8 +9,7 @@ final class AnonymousConnector {
 
     private static final String PREFIX_JDBC = "jdbc:";
 
-    private AnonymousConnector() {
-        // empty
+    private AnonymousConnector() { // empty, forbidden
     }
 
     /**

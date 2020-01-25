@@ -11,6 +11,8 @@ import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.*;
+import org.apache.commons.lang3.exception.*;
+import minestra.text.*;
 import stew6.*;
 import stew6.io.*;
 import stew6.ui.*;
@@ -21,7 +23,7 @@ import stew6.ui.*;
 final class WindowOutputProcessor extends JFrame implements OutputProcessor, AnyActionListener {
 
     private static final Logger log = Logger.getLogger(WindowOutputProcessor.class);
-    private static final ResourceManager res = ResourceManager.getInstance(WindowOutputProcessor.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(WindowOutputProcessor.class);
 
     private final AnyAction invoker;
     private final WindowLauncher launcher;
@@ -32,15 +34,14 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
     private File currentDirectory;
     private String postProcessMode;
 
-    WindowOutputProcessor(WindowLauncher launcher,
-                          ResultSetTable resultSetTable,
-                          ConsoleTextArea textArea) {
+    WindowOutputProcessor(WindowLauncher launcher, ResultSetTable resultSetTable, ConsoleTextArea textArea) {
         this.launcher = launcher;
         this.resultSetTable = resultSetTable;
         this.textArea = textArea;
         this.invoker = new AnyAction(this);
     }
 
+    @SuppressWarnings("resource")
     @Override
     public void output(final Object o) {
         try {
@@ -61,9 +62,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
             message = String.format("%s%n", o);
         }
         AnyAction aa4text = new AnyAction(textArea);
-        AnyActionEvent ev = new AnyActionEvent(this,
-                                               ConsoleTextArea.ActionKey.outputMessage,
-                                               replaceEOL(message));
+        AnyActionEvent ev = new AnyActionEvent(this, ConsoleTextArea.ActionKey.outputMessage, replaceEOL(message));
         aa4text.doLater("anyActionPerformed", ev);
     }
 
@@ -111,6 +110,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
      * @param ref
      * @throws SQLException
      */
+    @SuppressWarnings("resource")
     void outputResult(ResultSetReference ref) throws SQLException {
         // NOTICE: This method will be called by non AWT thread.
         // To access GUI, use "Later".
@@ -160,7 +160,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
 
     @SuppressWarnings("unused")
     private void notifyOverLimit(int limit) {
-        output(res.get("w.exceeded-limit", limit));
+        output(res.format("w.exceeded-limit", limit));
     }
 
     @SuppressWarnings("unused")
@@ -170,8 +170,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         if (p != null && p.getParent() instanceof JScrollPane) {
             JScrollPane scrollPane = (JScrollPane)p.getParent();
             ImageIcon icon = getImageIcon(String.format("linkable-%s.png", m.isLinkable()));
-            scrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                                 new JLabel(icon, SwingConstants.CENTER));
+            scrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, new JLabel(icon, SwingConstants.CENTER));
         }
         resultSetTable.anyActionPerformed(new AnyActionEvent(this, AnyActionKey.adjustColumnWidth));
         resultSetTable.getTableHeader().setVisible(true);
@@ -229,7 +228,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         aa.doLater("focusWindow");
         for (int i = 0, n = count >> 1 << 1; i < n; i++) {
             aa.doLater("shakeWindow", range);
-            sleep(interval);
+            App.sleepMillis(interval);
         }
     }
 
@@ -241,7 +240,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         for (int i = 0, n = (count / 45 + 1) * 45; i < n; i++) {
             alpha[0] = (byte)((Math.sin(i * 0.25f) + 1) * 32 * range);
             p.repaint();
-            sleep(interval);
+            App.sleepMillis(interval);
         }
         aa.doLater("removeComponent", p);
     }
@@ -289,7 +288,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
      */
     void importIntoCurrentTable() throws IOException, SQLException {
         if (env.getCurrentConnection() == null) {
-            showMessageDialog(this, res.get("w.not-connect"));
+            showMessageDialog(this, res.s("w.not-connect"));
             return;
         }
         TableModel tm = resultSetTable.getModel();
@@ -301,13 +300,13 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
             importable = false;
         }
         if (!importable) {
-            showMessageDialog(this, res.get("w.import-target-not-available"));
+            showMessageDialog(this, res.s("w.import-target-not-available"));
             return;
         }
         ResultSetTableModel m = (ResultSetTableModel)tm;
         assert currentDirectory != null;
         JFileChooser fileChooser = new JFileChooser(currentDirectory);
-        fileChooser.setDialogTitle(res.get("dialog.title.import"));
+        fileChooser.setDialogTitle(res.s("dialog.title.import"));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.showOpenDialog(this);
         final File file = fileChooser.getSelectedFile();
@@ -315,8 +314,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
             return;
         }
         setCurrentDirectory(file);
-        Importer importer = Importer.getImporter(file);
-        try {
+        try (Importer importer = Importer.getImporter(file)) {
             while (true) {
                 Object[] row = importer.nextRow();
                 if (row.length == 0) {
@@ -325,8 +323,6 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
                 m.addUnlinkedRow(row);
                 m.linkRow(m.getRowCount() - 1);
             }
-        } finally {
-            importer.close();
         }
     }
 
@@ -337,7 +333,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
     void exportTableContent() throws IOException {
         assert currentDirectory != null;
         JFileChooser fileChooser = new JFileChooser(currentDirectory);
-        fileChooser.setDialogTitle(res.get("dialog.title.export"));
+        fileChooser.setDialogTitle(res.s("dialog.title.export"));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.showSaveDialog(this);
         final File file = fileChooser.getSelectedFile();
@@ -346,12 +342,11 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         }
         setCurrentDirectory(file);
         if (file.exists()) {
-            if (showConfirmDialog(this, res.get("i.confirm-overwrite", file), null, YES_NO_OPTION) != YES_OPTION) {
+            if (showConfirmDialog(this, res.format("i.confirm-overwrite", file), null, YES_NO_OPTION) != YES_OPTION) {
                 return;
             }
         }
-        Exporter exporter = Exporter.getExporter(file);
-        try {
+        try (Exporter exporter = Exporter.getExporter(file)) {
             TableColumnModel columnModel = resultSetTable.getTableHeader().getColumnModel();
             List<Object> headerValues = new ArrayList<>();
             for (TableColumn column : Collections.list(columnModel.getColumns())) {
@@ -364,10 +359,8 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
             for (Vector<Object> row : rows) {
                 exporter.addRow(row.toArray());
             }
-        } finally {
-            exporter.close();
         }
-        showMessageDialog(this, res.get("i.exported"));
+        showMessageDialog(this, res.s("i.exported"));
     }
 
     private void showVersionInfo() {
@@ -376,7 +369,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         if (image != null) {
             icon.setImage(image.getScaledInstance(48, 48, Image.SCALE_SMOOTH));
         }
-        final String about = res.get(".about", App.getVersion());
+        final String about = res.format(".about", App.getVersion());
         showMessageDialog(this, about, null, PLAIN_MESSAGE, icon);
     }
 
@@ -423,14 +416,10 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         return (value == UNINITIALIZED_VALUE) ? null : value;
     }
 
-    void showInformationMessageDialog(String message, String title) {
-        showInformationMessageDialog(this, message, title);
-    }
-
-    static void showInformationMessageDialog(final Component parent, String message, String title) {
+    static void showWideMessageDialog(Component parent, String message) {
         JTextArea textArea = new JTextArea(message, 6, 60);
         setupReadOnlyTextArea(textArea);
-        showMessageDialog(parent, new JScrollPane(textArea), title, INFORMATION_MESSAGE);
+        showMessageDialog(parent, new JScrollPane(textArea), "", INFORMATION_MESSAGE);
     }
 
     void showErrorDialog(Throwable th) {
@@ -444,16 +433,13 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
         final String s1;
         final String s2;
         if (th == null) {
-            s1 = res.get("e.error-no-detail");
+            s1 = res.s("e.error-no-detail");
             s2 = "";
         } else {
             s1 = th.getMessage();
-            Writer buffer = new StringWriter();
-            PrintWriter out = new PrintWriter(buffer);
-            th.printStackTrace(out);
-            s2 = replaceEOL(buffer.toString());
+            s2 = replaceEOL(ExceptionUtils.getStackTrace(th));
         }
-        final String title = res.get("e.error");
+        final String title = res.s("e.error");
         class ErrorDialogTask implements Runnable {
             @Override
             public void run() {

@@ -1,6 +1,8 @@
 package stew6.ui.swing;
 
 import java.awt.event.*;
+import java.util.*;
+import java.util.stream.*;
 
 /**
  * @see AnyAction
@@ -20,6 +22,10 @@ final class AnyActionEvent extends ActionEvent {
 
     Object[] getArgs() {
         return args.clone();
+    }
+
+    List<String> getArgsAsStringList() {
+        return Stream.of(args).map(String::valueOf).collect(Collectors.toList());
     }
 
     void validate() {

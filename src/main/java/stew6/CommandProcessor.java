@@ -3,7 +3,9 @@ package stew6;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.*;
 import javax.script.*;
+import minestra.text.*;
 import net.argius.stew.*;
 import stew6.io.*;
 import stew6.ui.*;
@@ -14,7 +16,7 @@ import stew6.ui.*;
 final class CommandProcessor {
 
     private static Logger log = Logger.getLogger(CommandProcessor.class);
-    private static ResourceManager res = ResourceManager.getInstance(Command.class);
+    private static final ResourceSheaf res = App.res.derive().withClass(Command.class);
     private static final String HYPHEN_E = "-e";
 
     private final Environment env;
@@ -42,7 +44,7 @@ final class CommandProcessor {
                 }
             } catch (CommandException ex) {
                 env.setExitStatus(1);
-                op.output(res.get("e.serial-execution-interrupted", ex.getMessage()));
+                op.output(res.format("e.serial-execution-interrupted", ex.getMessage()));
             }
             return true;
         } else {
@@ -102,10 +104,10 @@ final class CommandProcessor {
             outputMessage("e.fatal", th.getMessage());
         }
         try {
+            @SuppressWarnings("resource")
             Connection conn = env.getCurrentConnection();
             if (conn != null) {
-                boolean isClosed = conn.isClosed();
-                if (isClosed) {
+                if (conn.isClosed()) {
                     log.info("connection is already closed");
                     disconnect();
                 }
@@ -116,6 +118,7 @@ final class CommandProcessor {
         throw new CommandException(parameterString);
     }
 
+    @SuppressWarnings("resource")
     private boolean process(String commandName, Parameter p) throws IOException, SQLException {
         assert commandName != null;
         // do nothing if blank
@@ -136,7 +139,7 @@ final class CommandProcessor {
         // from file
         if (commandName.equals("-f")) {
             if (!p.has(1)) {
-                throw new UsageException(res.get("usage.-f"));
+                throw new UsageException(res.s("usage.-f"));
             }
             final File file = FileUtilities.resolve(env.getCurrentDirectory(), p.at(1));
             final String abspath = file.getAbsolutePath();
@@ -145,7 +148,7 @@ final class CommandProcessor {
             }
             if (!file.isFile()) {
                 outputMessage("e.file-not-exists", abspath);
-                throw new UsageException(res.get("usage.-f"));
+                throw new UsageException(res.s("usage.-f"));
             }
             log.debug("-f %s", file.getAbsolutePath());
             invoke(String.format("%s%s", FileUtilities.readAllBytesAsString(file), p.after(2)));
@@ -154,7 +157,7 @@ final class CommandProcessor {
         // script
         if (commandName.equals("-s")) {
             if (!p.has(1)) {
-                throw new UsageException(res.get("usage.-s"));
+                throw new UsageException(res.s("usage.-s"));
             }
             final String p1 = p.at(1);
             if (p1.equals(".")) {
@@ -174,9 +177,8 @@ final class CommandProcessor {
                 file = null;
                 log.debug("script name: %s", p1);
             }
-            ScriptEngine engine = (file == null)
-                    ? new ScriptEngineManager().getEngineByName(p1)
-                    : new ScriptEngineManager().getEngineByExtension(FileUtilities.getExtension(file));
+            ScriptEngine engine = (file == null) ? new ScriptEngineManager().getEngineByName(p1)
+                                                 : new ScriptEngineManager().getEngineByExtension(FileUtilities.getExtension(file));
             if (engine == null) {
                 outputMessage("e.unsupported", p1);
                 return true;
@@ -239,7 +241,7 @@ final class CommandProcessor {
                     aliasMap.remove(p.at(1));
                     aliasMap.save();
                 } else {
-                    throw new UsageException(res.get("usage.unalias"));
+                    throw new UsageException(res.s("usage.unalias"));
                 }
             }
             return true;
@@ -252,7 +254,7 @@ final class CommandProcessor {
         // cd
         if (commandName.equalsIgnoreCase("cd")) {
             if (!p.has(1)) {
-                throw new UsageException(res.get("usage.cd"));
+                throw new UsageException(res.s("usage.cd"));
             }
             File olddir = env.getCurrentDirectory();
             final String path = p.at(1);
@@ -281,21 +283,14 @@ final class CommandProcessor {
         // runtime information
         if (commandName.equals("?")) {
             if (p.has(1)) {
-                for (final String k : p.asArray()) {
-                    if (k.equals("?")) {
-                        continue;
-                    }
-                    final String s = System.getProperties().containsKey(k)
-                            ? String.format("[%s]", System.getProperty(k))
-                            : "undefined";
-                    op.output(String.format("%s=%s", k, s));
-                }
+                Stream.of(p.asArray()).skip(1)
+                      .map(x -> x + "=" + Optional.ofNullable(System.getProperty(x))
+                                                  .map(y -> String.format("[%s]", y)).orElse("undefined"))
+                      .forEachOrdered(op::output);
             } else {
-                op.output(String.format("JRE : %s %s",
-                                        System.getProperty("java.runtime.name"),
+                op.output(String.format("JRE : %s %s", System.getProperty("java.runtime.name"),
                                         System.getProperty("java.runtime.version")));
-                op.output(String.format("OS : %s (osver=%s)",
-                                        System.getProperty("os.name"),
+                op.output(String.format("OS : %s (osver=%s)", System.getProperty("os.name"),
                                         System.getProperty("os.version")));
                 op.output(String.format("Locale : %s", Locale.getDefault()));
             }
@@ -360,16 +355,14 @@ final class CommandProcessor {
         if (commandName.indexOf('.') > 0) {
             fqcn = commandName;
         } else {
-            fqcn = App.rootPackageName
-                   + ".command."
-                   + commandName.substring(0, 1).toUpperCase()
+            fqcn = App.rootPackageName + ".command." + commandName.substring(0, 1).toUpperCase()
                    + commandName.substring(1).toLowerCase();
         }
         Class<? extends Command> c;
         try {
             c = DynamicLoader.loadClass(fqcn);
         } catch (DynamicLoadingException ex) {
-            c = Command.isSelect(p.asString()) ? Select.class : UpdateAndOthers.class;
+            c = Command.mayReturnResultSet(p.asString()) ? Select.class : UpdateAndOthers.class;
         }
         try (Command command = DynamicLoader.newInstance(c)) {
             Connector connector = env.getCurrentConnector();
@@ -393,7 +386,7 @@ final class CommandProcessor {
      * @throws CommandException
      */
     void outputMessage(String id, Object... args) throws CommandException {
-        op.output(res.get(id, args));
+        op.output(res.format(id, args));
     }
 
     /**
@@ -434,6 +427,7 @@ final class CommandProcessor {
             final long startTime = System.currentTimeMillis();
             try (ResultSet rs = executeQuery(stmt, rawString)) {
                 outputMessage("i.response-time", (System.currentTimeMillis() - startTime) / 1000f);
+                @SuppressWarnings("resource")
                 ResultSetReference ref = new ResultSetReference(rs, rawString);
                 output(ref);
                 outputMessage("i.selected", ref.getRecordCount());

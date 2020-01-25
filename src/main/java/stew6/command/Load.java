@@ -1,9 +1,9 @@
 package stew6.command;
 
-import static stew6.text.TextUtilities.join;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
+import org.apache.commons.lang3.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.io.*;
@@ -60,9 +60,8 @@ public class Load extends Command {
             log.debug("sql : " + sql);
         }
         try (Statement stmt = prepareStatement(conn, sql)) {
-            if (isSelect(sql)) {
-                try (ResultSet rs = executeQuery(stmt, sql)) {
-                    ResultSetReference ref = new ResultSetReference(rs, sql);
+            if (mayReturnResultSet(sql)) {
+                try (ResultSetReference ref = new ResultSetReference(executeQuery(stmt, sql), sql)) {
                     output(ref);
                     outputMessage("i.selected", ref.getRecordCount());
                 }
@@ -73,9 +72,7 @@ public class Load extends Command {
         }
     }
 
-    protected void loadRecord(Connection conn,
-                              File file,
-                              String tableName,
+    protected void loadRecord(Connection conn, File file, String tableName,
                               boolean hasHeader) throws IOException, SQLException {
         try (Importer importer = Importer.getImporter(file)) {
             final Object[] header;
@@ -89,10 +86,10 @@ public class Load extends Command {
                 }
             }
             final List<Object> headerList = Arrays.asList(header);
-            final String columns = (hasHeader) ? String.format("(%s)", join(",", headerList)) : "";
+            final String columns = (hasHeader) ? String.format("(%s)", StringUtils.join(headerList, ',')) : "";
             final List<Object> valueList = new ArrayList<>(headerList);
             Collections.fill(valueList, "?");
-            final String sql = String.format("INSERT INTO %s %s VALUES (%s)", tableName, columns, join(",", valueList));
+            final String sql = String.format("INSERT INTO %s %s VALUES (%s)", tableName, columns, StringUtils.join(valueList, ','));
             if (log.isDebugEnabled()) {
                 log.debug("SQL : " + sql);
             }
@@ -102,6 +99,7 @@ public class Load extends Command {
         }
     }
 
+    @SuppressWarnings("static-method")
     protected List<Class<?>> getTypes(PreparedStatement stmt) {
         final boolean disableConv = App.props.getAsBoolean("disableConversion");
         if (!disableConv) {
@@ -120,6 +118,7 @@ public class Load extends Command {
         return Collections.emptyList();
     }
 
+    @SuppressWarnings("unused")
     protected void insertRecords(PreparedStatement stmt, Importer importer) throws IOException, SQLException {
         int recordCount = 0;
         int insertedCount = 0;

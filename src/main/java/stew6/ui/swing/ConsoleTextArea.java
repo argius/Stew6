@@ -10,12 +10,12 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.stream.*;
 import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.text.Highlighter.*;
 import javax.swing.undo.*;
 import stew6.*;
-import stew6.text.*;
 
 /**
  * The console style text area.
@@ -56,16 +56,11 @@ final class ConsoleTextArea extends JTextArea implements AnyActionListener, Text
                 if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     try {
-                        StringBuilder buffer = new StringBuilder();
                         @SuppressWarnings("unchecked")
                         List<File> fileList = (List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
-                        for (File file : fileList) {
-                            buffer.append(file.getAbsolutePath()).append(" ");
-                        }
-                        append(buffer.toString());
-                    } catch (UnsupportedFlavorException ex) {
-                        throw new RuntimeException(ex);
-                    } catch (IOException ex) {
+                        final String s = fileList.stream().map(File::getAbsolutePath).collect(Collectors.joining(" "));
+                        append(s + " ");
+                    } catch (UnsupportedFlavorException | IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 }
@@ -80,7 +75,8 @@ final class ConsoleTextArea extends JTextArea implements AnyActionListener, Text
         } // empty
 
         @Override
-        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+        public void insertString(FilterBypass fb, int offset, String string,
+                                 AttributeSet attr) throws BadLocationException {
             if (isEditablePosition(offset)) {
                 super.insertString(fb, offset, string, attr);
             }
@@ -94,7 +90,8 @@ final class ConsoleTextArea extends JTextArea implements AnyActionListener, Text
         }
 
         @Override
-        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+        public void replace(FilterBypass fb, int offset, int length, String text,
+                            AttributeSet attrs) throws BadLocationException {
             if (isEditablePosition(offset)) {
                 super.replace(fb, offset, length, text, attrs);
             }
@@ -129,11 +126,11 @@ final class ConsoleTextArea extends JTextArea implements AnyActionListener, Text
             if (!isEditablePosition(getCaretPosition())) {
                 setCaretPosition(getEndPosition());
             }
-            replaceSelection(TextUtilities.join(" ", Arrays.asList(ev.getArgs())));
+            replaceSelection(String.join(" ", ev.getArgsAsStringList()));
             requestFocus();
         } else if (ev.isAnyOf(outputMessage)) {
-            for (Object o : ev.getArgs()) {
-                output(String.valueOf(o));
+            for (String s : ev.getArgsAsStringList()) {
+                output(s);
             }
         } else if (ev.isAnyOf(doNothing)) {
             // do nothing

@@ -6,6 +6,7 @@ import java.net.*;
 import java.sql.*;
 import java.util.*;
 import java.util.zip.*;
+import org.apache.commons.lang3.*;
 
 /**
  * A driver manager for Connector.
@@ -17,12 +18,13 @@ final class ConnectorDriverManager {
     static final Set<File> driverFiles = Collections.synchronizedSet(new LinkedHashSet<File>());
     static final Set<Driver> drivers = Collections.synchronizedSet(new LinkedHashSet<Driver>());
 
-    private ConnectorDriverManager() {
-    } // forbidden
+    private ConnectorDriverManager() { // empty, forbidden
+    }
 
+    @SuppressWarnings("resource")
     static Driver getDriver(String url, String driverClassName, String classpath) throws SQLException {
-        assert !isBlank(url);
-        final boolean hasClasspath = !isBlank(classpath);
+        assert !StringUtils.isBlank(url);
+        final boolean hasClasspath = !StringUtils.isBlank(classpath);
         if (!hasClasspath) {
             for (Driver driver : new ArrayList<>(drivers)) {
                 if (driver.acceptsURL(url)) {
@@ -57,11 +59,10 @@ final class ConnectorDriverManager {
                     log.warn(ex);
                 }
             }
-            cl = new URLClassLoader(urls.toArray(new URL[urls.size()]),
-                                    ClassLoader.getSystemClassLoader());
+            cl = new URLClassLoader(urls.toArray(new URL[urls.size()]), ClassLoader.getSystemClassLoader());
         }
         driverFiles.addAll(jars);
-        final boolean hasDriverClassName = !isBlank(driverClassName);
+        final boolean hasDriverClassName = !StringUtils.isBlank(driverClassName);
         if (hasDriverClassName) {
             try {
                 Driver driver = DynamicLoader.newInstance(driverClassName, cl);
@@ -75,7 +76,7 @@ final class ConnectorDriverManager {
             }
         }
         final String jdbcDrivers = System.getProperty("jdbc.drivers");
-        if (!isBlank(jdbcDrivers)) {
+        if (!StringUtils.isBlank(jdbcDrivers)) {
             for (String jdbcDriver : jdbcDrivers.split(":")) {
                 try {
                     Driver driver = DynamicLoader.newInstance(jdbcDriver, cl);
@@ -105,9 +106,8 @@ final class ConnectorDriverManager {
         }
         for (String path : System.getProperty("java.class.path", "").split(pathSeparator)) {
             if (isJarFile(path)) {
-                Driver driver;
                 try {
-                    driver = getDriver(new File(path), url, cl);
+                    Driver driver = getDriver(new File(path), url, cl);
                     if (driver != null) {
                         drivers.add(driver);
                         return driver;
@@ -121,8 +121,7 @@ final class ConnectorDriverManager {
     }
 
     private static Driver getDriver(File jar, String url, ClassLoader cl) throws IOException {
-        ZipFile zipFile = new ZipFile(jar);
-        try {
+        try (ZipFile zipFile = new ZipFile(jar)) {
             for (ZipEntry entry : Collections.list(zipFile.entries())) {
                 final String name = entry.getName();
                 if (name.endsWith(".class")) {
@@ -140,8 +139,6 @@ final class ConnectorDriverManager {
                     }
                 }
             }
-        } finally {
-            zipFile.close();
         }
         return null;
     }
@@ -167,10 +164,6 @@ final class ConnectorDriverManager {
 
     private static boolean isJarFile(String path) {
         return path.matches("(?i).+\\.(jar|zip)");
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.trim().length() == 0;
     }
 
 }

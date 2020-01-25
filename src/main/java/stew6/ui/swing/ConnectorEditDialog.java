@@ -12,29 +12,36 @@ import java.util.*;
 import java.util.List;
 import java.util.Map.*;
 import java.util.concurrent.*;
+import java.util.function.*;
 import java.util.zip.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
+import org.apache.commons.lang3.*;
+import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
 
 final class ConnectorEditDialog extends JDialog implements AnyActionListener {
 
     enum ActionKey {
-        referToOthers, searchFile, searchDriver, submit, tryToConnect, cancel
+        referToOthers, searchFile, chooseClasspathref, searchDriver, submit, tryToConnect, cancel
     }
 
     private static final Logger log = Logger.getLogger(ConnectorEditDialog.class);
-    private static final ResourceManager res = ResourceManager.getInstance(ConnectorEditDialog.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(ConnectorEditDialog.class);
     private static final int TEXT_SIZE = 32;
     private static final Insets TEXT_MARGIN = new Insets(1, 3, 1, 0);
     private static final Color COLOR_ESSENTIAL = new Color(0xFFF099);
 
+    private final Consumer<String> showErrorMessage = x -> showMessageDialog(this, x, null, ERROR_MESSAGE);
+    private final Pred<String> confirmYes = x -> showConfirmDialog(this, x, "", YES_NO_OPTION) == YES_OPTION;
+    private final Pred<Object> confirmOk = x -> showConfirmDialog(this, x, "", OK_CANCEL_OPTION) == OK_OPTION;
     private final Connector connector;
     private final JTextField tId;
     private final JTextField tName;
     private final JTextField tClasspath;
+    private final JTextField tClasspathref;
     private final JTextField tDriver;
     private final JTextField tUrl;
     private final JTextField tUser;
@@ -52,7 +59,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         super(owner);
         this.connector = connector;
         this.listenerList = new ArrayList<>();
-        setTitle(res.get("title"));
+        setTitle(res.s("title"));
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         // [Init Components]
         final FlexiblePanel p = new FlexiblePanel();
@@ -62,25 +69,29 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         tId = new JTextField(id, TEXT_SIZE);
         tId.setEditable(false);
         tId.setMargin(TEXT_MARGIN);
-        p.addComponent(new JLabel(res.get("connector.id")), false);
+        p.addComponent(new JLabel(res.s("connector.id")), false);
         p.addComponent(tId, true);
         tName = createJTextField(connector.getName(), false);
-        p.addComponent(new JLabel(res.get("connector.name")), false);
+        p.addComponent(new JLabel(res.s("connector.name")), false);
         p.addComponent(tName, false);
         p.addComponent(createJButton(referToOthers), true);
         tClasspath = createJTextField(connector.getClasspath(), false);
-        p.addComponent(new JLabel(res.get("connector.classpath")), false);
+        p.addComponent(new JLabel(res.s("connector.classpath")), false);
         p.addComponent(tClasspath, false);
         p.addComponent(createJButton(searchFile), true);
+        tClasspathref = createJTextField(connector.getClasspathref(), false);
+        p.addComponent(new JLabel(res.s("connector.classpathref")), false);
+        p.addComponent(tClasspathref, false);
+        p.addComponent(createJButton(chooseClasspathref), true);
         tDriver = createJTextField(connector.getDriver(), false);
-        p.addComponent(new JLabel(res.get("connector.driver")), false);
+        p.addComponent(new JLabel(res.s("connector.driver")), false);
         p.addComponent(tDriver, false);
         p.addComponent(createJButton(searchDriver), true);
         tUrl = createJTextField(connector.getUrl(), true);
-        p.addComponent(new JLabel(res.get("connector.url")), false);
+        p.addComponent(new JLabel(res.s("connector.url")), false);
         p.addComponent(tUrl, true);
         tUser = createJTextField(connector.getUser(), true);
-        p.addComponent(new JLabel(res.get("connector.user")), false);
+        p.addComponent(new JLabel(res.s("connector.user")), false);
         p.addComponent(tUser, true);
         tPassword = new JPasswordField(TEXT_SIZE);
         tPassword.setBackground(COLOR_ESSENTIAL);
@@ -89,7 +100,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         if (id.length() > 0 && password.hasPassword()) {
             tPassword.setText(password.getRawString());
         }
-        p.addComponent(new JLabel(res.get("connector.password")), false);
+        p.addComponent(new JLabel(res.s("connector.password")), false);
         p.addComponent(tPassword, true);
         PasswordItem[] items = {new PasswordItem(PlainTextPassword.class), new PasswordItem(PbePassword.class)};
         cPasswordClass = new JComboBox<>(items);
@@ -105,11 +116,11 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         if (passwordClassSelectedIndex < 0) {
             cPasswordClass.setSelectedItem(password.getClass().getName());
         }
-        p.addComponent(new JLabel(res.get("connector.encryption")), false);
+        p.addComponent(new JLabel(res.s("connector.encryption")), false);
         p.addComponent(cPasswordClass, true);
-        cReadOnly = new JCheckBox(res.get("connector.readonly"), connector.isReadOnly());
+        cReadOnly = new JCheckBox(res.s("connector.readonly"), connector.isReadOnly());
         p.addComponent(cReadOnly, true);
-        cUsesAutoRollback = new JCheckBox(res.get("connector.autorollback"), connector.usesAutoRollback());
+        cUsesAutoRollback = new JCheckBox(res.s("connector.autorollback"), connector.usesAutoRollback());
         p.addComponent(cUsesAutoRollback, true);
         // setup and layout buttons
         JPanel p2 = new JPanel(new GridLayout(1, 3, 16, 0));
@@ -142,6 +153,8 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
                 referToOtherConnectors();
             } else if (ev.isAnyOf(searchFile)) {
                 chooseClasspath();
+            } else if (ev.isAnyOf(chooseClasspathref)) {
+                chooseClasspathref();
             } else if (ev.isAnyOf(searchDriver)) {
                 chooseDriverClass();
             } else if (ev.isAnyOf(submit)) {
@@ -172,7 +185,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
 
     private JButton createJButton(ActionKey key) {
         final String cmd = key.toString();
-        JButton c = new JButton(res.get("button." + cmd));
+        JButton c = new JButton(res.s("button." + cmd));
         c.setActionCommand(cmd);
         c.addActionListener(new AnyAction(this));
         return c;
@@ -188,6 +201,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         props.setProperty("name", tName.getText());
         props.setProperty("driver", tDriver.getText());
         props.setProperty("classpath", tClasspath.getText());
+        props.setProperty("classpathref", tClasspathref.getText());
         props.setProperty("url", tUrl.getText());
         props.setProperty("user", tUser.getText());
         props.setProperty("readonly", Boolean.toString(cReadOnly.isSelected()));
@@ -215,13 +229,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
     }
 
     void referToOtherConnectors() {
-        ConnectorMap m;
-        try {
-            m = ConnectorConfiguration.load();
-        } catch (IOException ex) {
-            WindowOutputProcessor.showErrorDialog(this, ex);
-            return;
-        }
+        ConnectorMap m = ConnectorMap.createFromFile();
         String[] names = {"id", "name", "classpath", "driver", "url", "user"};
         Vector<Vector<String>> data = new Vector<>();
         for (Entry<String, Connector> entry : m.entrySet()) {
@@ -239,13 +247,13 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         t.setDefaultEditor(Object.class, null);
         Vector<String> headers = new Vector<>();
         for (String name : names) {
-            headers.add(res.get("connector." + name));
+            headers.add(res.s("connector." + name));
         }
         t.setModel(new DefaultTableModel(data, headers));
         JPanel p = new JPanel(new BorderLayout());
-        p.add(new JLabel(res.get("dialog.referToOthers.message")), BorderLayout.PAGE_START);
+        p.add(new JLabel(res.s("dialog.referToOthers.message")), BorderLayout.PAGE_START);
         p.add(new JScrollPane(t), BorderLayout.CENTER);
-        if (showConfirmDialog(this, p, null, OK_CANCEL_OPTION) != OK_OPTION || t.getSelectedRow() < 0) {
+        if (!confirmOk.exam(p) || t.getSelectedRow() < 0) {
             return;
         }
         final Properties selected = m.get(t.getValueAt(t.getSelectedRow(), 0)).toProperties();
@@ -281,8 +289,8 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         }
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(currentDirectory);
-        fileChooser.setDialogTitle(res.get("dialog.search.file.header"));
-        fileChooser.setApproveButtonText(res.get("dialog.search.file.button"));
+        fileChooser.setDialogTitle(res.s("dialog.search.file.header"));
+        fileChooser.setApproveButtonText(res.s("dialog.search.file.button"));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         fileChooser.showDialog(this, null);
         File file = fileChooser.getSelectedFile();
@@ -294,17 +302,65 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         }
     }
 
+    void chooseClasspathref() {
+        ClasspathrefConfig cfg;
+        try {
+            cfg = ClasspathrefConfigFile.read();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        Vector<Vector<String>> data = new Vector<>();
+        for (Entry<String, String> entry : cfg.entrySet()) {
+            Vector<String> a = new Vector<>();
+            a.add(entry.getKey());
+            a.add(entry.getValue());
+            data.add(a);
+        }
+        JTable t = new JTable();
+        t.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+        t.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        t.setDefaultEditor(Object.class, null);
+        Vector<String> headers = new Vector<>();
+        headers.add("REF-ID");
+        headers.add(res.s("connector.classpath"));
+        t.setModel(new DefaultTableModel(data, headers));
+        t.getTableHeader().getColumnModel().getColumn(0).setMinWidth(100);
+        t.getTableHeader().getColumnModel().getColumn(1).setMinWidth(700);
+        SwingUtilities.updateComponentTreeUI(t);
+        JPanel p = new JPanel(new BorderLayout());
+        p.add(new JLabel(res.s("dialog.chooseClasspathref.message")), BorderLayout.PAGE_START);
+        p.add(new JScrollPane(t), BorderLayout.CENTER);
+        if (!confirmOk.exam(p) || t.getSelectedRow() < 0) {
+            return;
+        }
+        final String selected = (String)t.getValueAt(t.getSelectedRow(), 0);
+        tClasspathref.setText(selected);
+    }
+
     void chooseDriverClass() {
-        String text = tClasspath.getText();
-        if (text.trim().length() == 0) {
-            String message = res.get("confirm.searchsystemclasspath");
-            if (showConfirmDialog(this, message, null, OK_CANCEL_OPTION) != OK_OPTION) {
-                return;
+        final String classpathString;
+        final String classpathText = tClasspath.getText();
+        if (StringUtils.isBlank(classpathText)) {
+            final String classpathrefString = tClasspathref.getText();
+            if (StringUtils.isBlank(classpathrefString)) {
+                if (!confirmOk.exam(res.s("confirm.searchsystemclasspath"))) {
+                    return;
+                }
+                classpathString = System.getProperty("java.class.path");
+            } else {
+                ClasspathrefConfig cfg;
+                try {
+                    cfg = ClasspathrefConfigFile.read();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                classpathString = cfg.get(classpathrefString);
             }
-            text = System.getProperty("java.class.path");
+        } else {
+            classpathString = classpathText;
         }
         final Set<String> classes = new LinkedHashSet<>();
-        for (String path : text.split(File.pathSeparator)) {
+        for (String path : classpathString.split(File.pathSeparator)) {
             File file = new File(path);
             final URL[] urls;
             try {
@@ -318,15 +374,15 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
             finder.find(file);
         }
         if (classes.isEmpty()) {
-            showMessageDialog(this, res.get("search.driver.classnotfound"), null, ERROR_MESSAGE);
-        } else {
-            final String message = res.get("selectDriverClass");
-            Object[] a = classes.toArray();
-            Object value = showInputDialog(this, message, "", PLAIN_MESSAGE, null, a, a[0]);
-            if (value != null) {
-                tDriver.setText((String)value);
-                tDriver.setCaretPosition(0);
-            }
+            showErrorMessage.accept(res.s("search.driver.classnotfound"));
+            return ;
+        }
+        final String message = res.s("selectDriverClass");
+        Object[] a = classes.toArray();
+        Object value = showInputDialog(this, message, "", PLAIN_MESSAGE, null, a, a[0]);
+        if (value != null) {
+            tDriver.setText((String)value);
+            tDriver.setCaretPosition(0);
         }
     }
 
@@ -337,11 +393,10 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
         while (true) {
             try {
                 final String result = future.get(timeoutSeconds, TimeUnit.SECONDS);
-                WindowOutputProcessor.showInformationMessageDialog(this, result, "");
+                WindowOutputProcessor.showWideMessageDialog(this, result);
                 return;
             } catch (TimeoutException ex) {
-                String confirmMsg = res.get("i.confirm.retry-timeout", timeoutSeconds);
-                if (showConfirmDialog(this, confirmMsg, "", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+                if (!confirmYes.exam(res.format("i.confirm.retry-timeout", timeoutSeconds))) {
                     return;
                 }
             } catch (Exception ex) {
@@ -359,7 +414,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
                 listener.stateChanged(event);
             }
         } else if (!newConnector.equals(this.connector)) {
-            if (showConfirmDialog(this, res.get("i.confirm-without-register"), null, OK_CANCEL_OPTION) != OK_OPTION) {
+            if (!confirmOk.exam(res.s("i.confirm-without-register"))) {
                 return;
             }
         }
@@ -436,7 +491,9 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
                             }
                         }
                     } else if (name.matches("(?i).+\\.(jar|zip)")) {
-                        find(new ZipFile(f));
+                        @SuppressWarnings("resource")
+                        final ZipFile zipFile = new ZipFile(f);
+                        find(zipFile);
                     }
                 }
             } catch (IOException ex) {

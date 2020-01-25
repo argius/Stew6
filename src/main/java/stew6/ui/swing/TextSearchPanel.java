@@ -8,8 +8,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.*;
 import javax.swing.*;
-import stew6.*;
+import minestra.text.*;
 import stew6.ui.swing.TextSearch.*;
 
 /**
@@ -21,7 +22,7 @@ final class TextSearchPanel extends JPanel implements AnyActionListener {
         close, search, forward, backward
     }
 
-    private static final ResourceManager res = ResourceManager.getInstance(TextSearchPanel.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(TextSearchPanel.class);
 
     private final List<TextSearch> targets;
     private final JTextField text;
@@ -35,18 +36,18 @@ final class TextSearchPanel extends JPanel implements AnyActionListener {
         // [Init Instances]
         this.targets = new ArrayList<>();
         this.text = new JTextField(20);
-        this.useRegexCheck = new JCheckBox(res.get("useregex"));
-        this.ignoreCaseCheck = new JCheckBox(res.get("ignorecase"));
+        this.useRegexCheck = new JCheckBox(res.s("useregex"));
+        this.ignoreCaseCheck = new JCheckBox(res.s("ignorecase"));
         setLayout(new FlowLayout(FlowLayout.LEFT, 1, 1));
         setVisible(false);
         final JButton closeButton = new JButton(Utilities.getImageIcon("close.png"));
         final JTextField text = this.text;
-        final JButton forwardButton = new JButton(res.get("forward"));
-        final JButton backwardButton = new JButton(res.get("backward"));
+        final JButton forwardButton = new JButton(res.s("forward"));
+        final JButton backwardButton = new JButton(res.s("backward"));
         final JCheckBox useRegexCheck = this.useRegexCheck;
         final JCheckBox ignoreCaseCheck = this.ignoreCaseCheck;
         // [Layout]
-        closeButton.setToolTipText(res.get("close"));
+        closeButton.setToolTipText(res.s("close"));
         closeButton.setMargin(new Insets(0, 0, 0, 0));
         text.setMargin(new Insets(1, 2, 1, 2));
         forwardButton.setMargin(new Insets(0, 7, 0, 7));
@@ -56,7 +57,7 @@ final class TextSearchPanel extends JPanel implements AnyActionListener {
         add(createFiller(2));
         add(closeButton);
         add(createFiller(2));
-        add(new JLabel(res.get("label")));
+        add(new JLabel(res.s("label")));
         add(text);
         add(createFiller(1));
         add(forwardButton);
@@ -92,10 +93,8 @@ final class TextSearchPanel extends JPanel implements AnyActionListener {
         bindEvent(backwardButton, backward);
         // ESC key
         final KeyStroke ksESC = getKeyStroke(VK_ESCAPE, 0);
-        for (JComponent c : new JComponent[]{closeButton, text, forwardButton, backwardButton,
-                                             useRegexCheck, ignoreCaseCheck}) {
-            bindEvent(c, close, ksESC);
-        }
+        Stream.of(closeButton, text, forwardButton, backwardButton, useRegexCheck, ignoreCaseCheck)
+              .forEach(x -> bindEvent(x, close, ksESC));
     }
 
     private void bindEvent(JButton b, Object key) {
@@ -199,7 +198,7 @@ final class TextSearchPanel extends JPanel implements AnyActionListener {
             } else {
                 parent = getParent();
             }
-            showMessageDialog(parent, res.get("message.notfound", s), null, WARNING_MESSAGE);
+            showMessageDialog(parent, res.format("message.notfound", s), null, WARNING_MESSAGE);
         }
     }
 

@@ -45,6 +45,7 @@ public class UploadTest {
             byte[] binData = new byte[]{0x01, 0x02};
             Files.write(binFile.toPath(), binData);
             executeCommand(cmd, conn, " " + binFile + " B update table2 set filedata=? where id=1");
+            @SuppressWarnings("resource")
             Download download = new Download();
             download.setEnvironment(env);
             executeCommand(download, conn, " " + dir + " select filedata, id, '.bin' from table2 where id=1");

@@ -7,13 +7,14 @@ import java.util.concurrent.*;
 import org.hamcrest.*;
 import org.junit.*;
 import org.junit.rules.*;
+import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.ui.console.*;
 
 public final class WaitTest {
 
-    private static final ResourceManager res = ResourceManager.getInstance(Command.class);
+    private static final ResourceSheaf res = App.res.derive().withClass(Command.class);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -50,7 +51,7 @@ public final class WaitTest {
     public void testUsageException() throws SQLException {
         try (Connection conn = connection()) {
             thrown.expect(UsageException.class);
-            thrown.expectMessage(res.get("usage." + cmd.getClass().getSimpleName()));
+            thrown.expectMessage(res.s("usage." + cmd.getClass().getSimpleName()));
             executeCommand(cmd, conn, "X");
         }
     }
@@ -59,11 +60,8 @@ public final class WaitTest {
     public void testInterruptedException() throws SQLException {
         ScheduledExecutorService es = Executors.newSingleThreadScheduledExecutor();
         final Thread currThread = Thread.currentThread();
-        es.schedule(new Runnable() {
-            @Override
-            public void run() {
-                currThread.interrupt();
-            }
+        es.schedule(() -> {
+            currThread.interrupt();
         }, 500L, TimeUnit.MILLISECONDS);
         try (Connection conn = connection()) {
             thrown.expect(CommandException.class);

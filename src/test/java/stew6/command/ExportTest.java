@@ -7,13 +7,14 @@ import java.sql.*;
 import org.hamcrest.*;
 import org.junit.*;
 import org.junit.rules.*;
+import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.ui.console.*;
 
 public final class ExportTest {
 
-    private static final ResourceManager res = ResourceManager.getInstance(Command.class);
+    private static final ResourceSheaf res = App.res.derive().withClass(Command.class);
 
     @Rule
     public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -55,7 +56,7 @@ public final class ExportTest {
     public void testUsageException1() throws Exception {
         try (Connection conn = connection()) {
             thrown.expect(UsageException.class);
-            thrown.expectMessage(res.get("usage." + cmd.getClass().getSimpleName()));
+            thrown.expectMessage(res.s("usage." + cmd.getClass().getSimpleName()));
             executeCommand(cmd, conn, "");
         }
     }
@@ -66,7 +67,7 @@ public final class ExportTest {
         String path = getTempFilePath(testName + ".txt").getAbsolutePath();
         try (Connection conn = connection()) {
             thrown.expect(UsageException.class);
-            thrown.expectMessage(res.get("usage." + cmd.getClass().getSimpleName()));
+            thrown.expectMessage(res.s("usage." + cmd.getClass().getSimpleName()));
             executeCommand(cmd, conn, path + " find");
         }
     }
@@ -77,7 +78,7 @@ public final class ExportTest {
         String path = getTempFilePath(testName + ".txt").getAbsolutePath();
         try (Connection conn = connection()) {
             thrown.expect(UsageException.class);
-            thrown.expectMessage(res.get("usage." + cmd.getClass().getSimpleName()));
+            thrown.expectMessage(res.s("usage." + cmd.getClass().getSimpleName()));
             executeCommand(cmd, conn, path + " report");
         }
     }
@@ -88,7 +89,7 @@ public final class ExportTest {
         String path = getTempFilePath(testName + ".txt").getAbsolutePath();
         try (Connection conn = connection()) {
             thrown.expect(UsageException.class);
-            thrown.expectMessage(res.get("usage." + cmd.getClass().getSimpleName()));
+            thrown.expectMessage(res.s("usage." + cmd.getClass().getSimpleName()));
             executeCommand(cmd, conn, path + " report -");
         }
     }
@@ -99,7 +100,7 @@ public final class ExportTest {
         String path = getTempFilePath(testName + ".txt").getAbsolutePath();
         try (Connection conn = connection()) {
             thrown.expect(UsageException.class);
-            thrown.expectMessage(res.get("usage." + cmd.getClass().getSimpleName()));
+            thrown.expectMessage(res.s("usage." + cmd.getClass().getSimpleName()));
             executeCommand(cmd, conn, path + " XXX");
         }
     }

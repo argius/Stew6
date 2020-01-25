@@ -2,6 +2,7 @@ package stew6.command;
 
 import java.io.*;
 import java.sql.*;
+import org.apache.commons.io.*;
 import net.argius.stew.*;
 import stew6.*;
 
@@ -42,7 +43,6 @@ public final class Download extends Command {
         } catch (IllegalArgumentException ex) {
             throw new CommandException(ex);
         }
-        byte[] buffer = new byte[(isBinary) ? 0x10000 : 0];
         int count = 0;
         while (rs.next()) {
             ++count;
@@ -64,13 +64,7 @@ public final class Download extends Command {
                         }
                     } else {
                         try (OutputStream os = new FileOutputStream(file)) {
-                            while (true) {
-                                int readLength = is.read(buffer);
-                                if (readLength <= 0) {
-                                    break;
-                                }
-                                os.write(buffer, 0, readLength);
-                            }
+                            IOUtils.copy(is, os);
                         }
                     }
                 }

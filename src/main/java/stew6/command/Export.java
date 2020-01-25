@@ -3,6 +3,8 @@ package stew6.command;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
+import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.tuple.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.io.*;
@@ -40,44 +42,12 @@ public final class Export extends Command {
             if (file.exists()) {
                 throw new CommandException(getMessage("e.file-already-exists", file));
             }
-            Parameter p2 = new Parameter(cmd);
-            final String subCommand = p2.at(0);
-            final ResultSetReference ref;
-            if (subCommand.equalsIgnoreCase("SELECT")) {
-                try (Statement stmt = prepareStatement(conn, cmd)) {
-                    ref = new ResultSetReference(executeQuery(stmt, cmd), "");
-                    export(file, ref, withHeader);
-                }
-            } else if (subCommand.equalsIgnoreCase("FIND")) {
-                try (Find find = new Find()) {
-                    find.setEnvironment(env);
-                    ref = find.getResult(conn, p2);
-                } catch (UsageException ex) {
-                    throw new UsageException(getMessage("Export.command.usage",
-                                                        getMessage("usage.Export"),
-                                                        cmd,
-                                                        ex.getMessage()));
-                }
-                try (ResultSet rs = ref.getResultSet()) {
-                    export(file, ref, withHeader);
-                }
-            } else if (subCommand.equalsIgnoreCase("REPORT") && !p2.at(1).equals("-")) {
-                try (Report report = new Report()) {
-                    report.setEnvironment(env);
-                    ref = report.getResult(conn, p2);
-                } catch (UsageException ex) {
-                    throw new UsageException(getMessage("Export.command.usage",
-                                                        getMessage("usage.Export"),
-                                                        cmd,
-                                                        ex.getMessage()));
-                }
-                try (ResultSet rs = ref.getResultSet()) {
-                    export(file, ref, withHeader);
-                }
-            } else {
-                throw new UsageException(getUsage());
+            Pair<Optional<ResultSetReference>, String> result = executeSubCommand(conn, file, withHeader, cmd);
+            try (ResultSetReference ref = result.getLeft().orElseThrow(() -> {
+                return new UsageException(StringUtils.isBlank(result.getRight()) ? getUsage() : result.getRight());
+            })) {
+                outputMessage("i.selected", ref.getRecordCount());
             }
-            outputMessage("i.selected", ref.getRecordCount());
             outputMessage("i.exported");
         } catch (IOException ex) {
             throw new CommandException(ex);
@@ -90,6 +60,43 @@ public final class Export extends Command {
         }
     }
 
+    @SuppressWarnings("resource")
+    Pair<Optional<ResultSetReference>, String> executeSubCommand(Connection conn, File file, boolean withHeader,
+                                                                 String cmd) throws SQLException, IOException {
+        Parameter p = new Parameter(cmd);
+        final String subCommand = p.at(0);
+        ResultSetReference ref;
+        if (subCommand.equalsIgnoreCase("SELECT")) {
+            // TODO resource
+            Statement stmt = prepareStatement(conn, cmd);
+            ref = new ResultSetReference(executeQuery(stmt, cmd), "");
+            export(file, ref, withHeader);
+            return new ImmutablePair<>(Optional.of(ref), "");
+        } else {
+            try {
+                if (subCommand.equalsIgnoreCase("FIND")) {
+                    try (Find find = new Find()) {
+                        find.setEnvironment(env);
+                        ref = find.getResult(conn, p);
+                    }
+                } else if (subCommand.equalsIgnoreCase("REPORT") && !p.at(1).equals("-")) {
+                    try (Report report = new Report()) {
+                        report.setEnvironment(env);
+                        ref = report.getResult(conn, p);
+                    }
+                } else {
+                    return new ImmutablePair<>(Optional.empty(), "");
+                }
+            } catch (UsageException ex) {
+                return new ImmutablePair<>(Optional.empty(),
+                                           getMessage("Export.command.usage", getMessage("usage.Export"), cmd,
+                                                      ex.getMessage()));
+            }
+        }
+        export(file, ref, withHeader);
+        return new ImmutablePair<>(Optional.of(ref), "");
+    }
+
     @Override
     public boolean isReadOnly() {
         return true;
@@ -97,6 +104,7 @@ public final class Export extends Command {
 
     private static void export(File file, ResultSetReference ref, boolean withHeader) throws IOException, SQLException {
         try (Exporter exporter = Exporter.getExporter(file)) {
+            @SuppressWarnings("resource")
             ResultSet rs = ref.getResultSet();
             ColumnOrder order = ref.getOrder();
             boolean needOrderChange = order.size() > 0;

@@ -18,10 +18,12 @@ import java.util.List;
 import java.util.Map.*;
 import java.util.Timer;
 import java.util.concurrent.*;
+import java.util.function.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import javax.swing.text.*;
+import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.ui.*;
@@ -36,12 +38,15 @@ public final class WindowLauncher implements
                                   Runnable,
                                   UncaughtExceptionHandler {
 
-    static final ResourceManager res = ResourceManager.getInstance(WindowLauncher.class);
+    static final ResourceSheaf res = App.res.derive().withClass(WindowLauncher.class).withExtension("u8p").withMessages().withExtension("u8p");
     private static final Logger log = Logger.getLogger(WindowLauncher.class);
     private static final String configFileName = "stew.ui.swing.window.config.xml";
 
     private static final List<WindowLauncher> instances = Collections.synchronizedList(new ArrayList<WindowLauncher>());
 
+    private final BiConsumer<String, Integer> showMessage = (x, y) -> showMessageDialog(focused(), x, null, y);
+    private final Pred<String> confirmYes = x -> showConfirmDialog(focused(), x, "", YES_NO_OPTION) == YES_OPTION;
+    private final Pred<Object> confirmOk = x -> showConfirmDialog(focused(), x, "", OK_CANCEL_OPTION) == OK_OPTION;
     private final WindowOutputProcessor op;
     private final Menu menu;
     private final JPanel panel1;
@@ -83,7 +88,7 @@ public final class WindowLauncher implements
         this.executorService = Executors.newScheduledThreadPool(3, DaemonThreadFactory.getInstance());
         // [Components]
         // OutputProcessor as frame
-        op.setTitle(res.get(".title"));
+        op.setTitle(res.s(".title"));
         op.setIconImage(Utilities.getImageIcon("stew.png").getImage());
         op.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         // splitpane (infotree and sub-splitpane)
@@ -288,9 +293,7 @@ public final class WindowLauncher implements
                 op.setAlwaysOnTop(((JCheckBoxMenuItem)source).isSelected());
             } else if (ev.isAnyOf(refresh)) {
                 refreshResult();
-            } else if (ev.isAnyOf(autoAdjustModeNone,
-                                  autoAdjustModeHeader,
-                                  autoAdjustModeValue,
+            } else if (ev.isAnyOf(autoAdjustModeNone, autoAdjustModeHeader, autoAdjustModeValue,
                                   autoAdjustModeHeaderAndValue)) {
                 resultSetTable.setAutoAdjustMode(ev.getActionCommand());
             } else if (ev.isAnyOf(widenColumnWidth, narrowColumnWidth, adjustColumnWidth)) {
@@ -300,7 +303,7 @@ public final class WindowLauncher implements
             } else if (ev.isAnyOf(breakCommand)) {
                 env.getOutputProcessor().close();
                 env.setOutputProcessor(new WindowOutputProcessor.Bypass(op));
-                op.output(res.get("i.cancelled"));
+                op.output(res.s("i.cancelled"));
                 doPostProcess();
             } else if (ev.isAnyOf(lastHistory)) {
                 retrieveHistory(-1);
@@ -308,9 +311,9 @@ public final class WindowLauncher implements
                 retrieveHistory(+1);
             } else if (ev.isAnyOf(showAllHistories)) {
                 if (historyList.isEmpty()) {
-                    op.showInformationMessageDialog(res.get("w.no-histories"), null);
+                    WindowOutputProcessor.showWideMessageDialog(focused(), res.s("w.no-histories"));
                 } else {
-                    final String msg = res.get("i.choose-history", historyList.size());
+                    final String msg = res.format("i.choose-history", historyList.size());
                     final String lastCommand = historyList.get(historyList.size() - 1);
                     Object value = op.showInputDialog(msg, null, historyList.toArray(), lastCommand);
                     if (value != null) {
@@ -319,23 +322,21 @@ public final class WindowLauncher implements
                     }
                 }
             } else if (ev.isAnyOf(sendRollback)) {
-                if (confirmCommitable()
-                    && showConfirmDialog(op, res.get("i.confirm-rollback"), null, OK_CANCEL_OPTION) == OK_OPTION) {
+                if (confirmCommitable() && confirmOk.exam(res.s("i.confirm-rollback"))) {
                     executeCommand("rollback");
                 }
             } else if (ev.isAnyOf(sendCommit)) {
-                if (confirmCommitable()
-                    && showConfirmDialog(op, res.get("i.confirm-commit"), null, OK_CANCEL_OPTION) == OK_OPTION) {
+                if (confirmCommitable() && confirmOk.exam(res.s("i.confirm-commit"))) {
                     executeCommand("commit");
                 }
             } else if (ev.isAnyOf(connect)) {
                 env.updateConnectorMap();
                 if (env.getConnectorMap().isEmpty()) {
-                    showMessageDialog(op, res.get("w.no-connector"));
+                    showMessage.accept(res.s("w.no-connector"), INFORMATION_MESSAGE);
                     return;
                 }
                 Object[] a = ConnectorEntry.toList(env.getConnectorMap().values()).toArray();
-                final String m = res.get("i.choose-connection");
+                final String m = res.s("i.choose-connection");
                 Object value = showInputDialog(op, m, null, PLAIN_MESSAGE, null, a, a[0]);
                 if (value != null) {
                     ConnectorEntry c = (ConnectorEntry)value;
@@ -343,9 +344,7 @@ public final class WindowLauncher implements
                 }
             } else if (ev.isAnyOf(disconnect)) {
                 executeCommand("disconnect");
-            } else if (ev.isAnyOf(postProcessModeNone,
-                                  postProcessModeFocus,
-                                  postProcessModeShake,
+            } else if (ev.isAnyOf(postProcessModeNone, postProcessModeFocus, postProcessModeShake,
                                   postProcessModeBlink)) {
                 op.setPostProcessMode(ev.getActionCommand());
             } else if (ev.isAnyOf(inputEcryptionKey)) {
@@ -405,6 +404,10 @@ public final class WindowLauncher implements
             panel1.add(textSearchPanel, BorderLayout.PAGE_END);
         }
         SwingUtilities.updateComponentTreeUI(op);
+    }
+
+    private Component focused() {
+        return focused == null ? op : focused;
     }
 
     private void loadConfiguration() {
@@ -662,22 +665,13 @@ public final class WindowLauncher implements
         }
     }
 
-    /**
-     * Confirms whether pressed YES or not at dialog.
-     * @param message
-     * @return true if pressed YES
-     */
-    private boolean confirmYes(String message) {
-        return showConfirmDialog(op, message, "", YES_NO_OPTION) == YES_OPTION;
-    }
-
     private boolean confirmCommitable() {
         if (env.getCurrentConnection() == null) {
-            showMessageDialog(op, res.get("w.not-connect"), null, OK_OPTION);
+            showMessage.accept(res.s("w.not-connect"), OK_OPTION);
             return false;
         }
         if (env.getCurrentConnector().isReadOnly()) {
-            showMessageDialog(op, res.get("w.connector-readonly"), null, OK_OPTION);
+            showMessage.accept(res.s("w.connector-readonly"), OK_OPTION);
             return false;
         }
         return true;
@@ -703,7 +697,7 @@ public final class WindowLauncher implements
     void requestClose() {
         if (instances.size() == 1) {
             requestExit();
-        } else if (env.getCurrentConnection() == null || confirmYes(res.get("i.confirm-close"))) {
+        } else if (env.getCurrentConnection() == null || confirmYes.exam(res.s("i.confirm-close"))) {
             close();
         }
     }
@@ -712,7 +706,7 @@ public final class WindowLauncher implements
      * Requests to exit this application.
      */
     void requestExit() {
-        if (confirmYes(res.get("i.confirm-quit"))) {
+        if (confirmYes.exam(res.s("i.confirm-quit"))) {
             exit();
         }
     }
@@ -731,8 +725,8 @@ public final class WindowLauncher implements
 
     private void editEncryptionKey() {
         JPasswordField password = new JPasswordField(20);
-        Object[] a = {res.get("i.input-encryption-key"), password};
-        if (showConfirmDialog(op, a, null, OK_CANCEL_OPTION) == OK_OPTION) {
+        Object[] a = {res.s("i.input-encryption-key"), password};
+        if (confirmOk.exam(a)) {
             CipherPassword.setSecretKey(String.valueOf(password.getPassword()));
         }
     }
@@ -740,7 +734,7 @@ public final class WindowLauncher implements
     private void editConnectorMap() {
         env.updateConnectorMap();
         if (env.getCurrentConnector() != null) {
-            showMessageDialog(op, res.get("i.reconnect-after-edited-current-connector"));
+            showMessage.accept(res.s("i.reconnect-after-edited-current-connector"), INFORMATION_MESSAGE);
         }
         ConnectorMapEditDialog dialog = new ConnectorMapEditDialog(op, env);
         dialog.pack();
@@ -750,15 +744,10 @@ public final class WindowLauncher implements
         env.updateConnectorMap();
     }
 
-    private static void showHelp() {
-        final String suffix;
-        if (res.containsKey("key.lang")) {
-            suffix = res.get("key.lang");
-        } else {
-            suffix = "en"; // default locale
-        }
+    private void showHelp() {
+        final String suffix = res.string("key.lang", "en");
         final String url = "https://github.com/argius/Stew5/wiki/UserGuide_" + suffix;
-        if (showConfirmDialog(null, res.get("i.confirm-jump-to-web", url), null, OK_CANCEL_OPTION) != OK_OPTION) {
+        if (!confirmOk.exam(res.format("i.confirm-jump-to-web", url))) {
             return;
         }
         if (Desktop.isDesktopSupported()) {
@@ -795,6 +784,7 @@ public final class WindowLauncher implements
             final class CommandTask implements Runnable {
                 @Override
                 public void run() {
+                    @SuppressWarnings("resource")
                     Connection conn = env.getCurrentConnection();
                     long time = System.currentTimeMillis();
                     if (!Commands.invoke(env, cmd)) {
@@ -814,7 +804,7 @@ public final class WindowLauncher implements
                     }
                     if (env.getOutputProcessor() == opref) {
                         time = System.currentTimeMillis() - time;
-                        statusBar.setText(res.get("i.statusbar-message", time / 1000f, cmd));
+                        statusBar.setText(res.format("i.statusbar-message", time / 1000f, cmd));
                         invoker.doLater("doPostProcess");
                     }
                 }

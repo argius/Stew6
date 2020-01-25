@@ -1,8 +1,13 @@
 package stew6;
 
 import java.io.*;
+import java.nio.charset.*;
 import java.util.*;
+import org.apache.commons.io.*;
+import org.apache.commons.lang3.*;
+import minestra.text.*;
 import stew6.ui.console.*;
+import stew6.ui.fx.*;
 import stew6.ui.swing.*;
 
 /**
@@ -16,10 +21,11 @@ public final class App {
     public static final String rootPackageName = App.class.getPackage().getName();
     private static final File dir = initializeDirectory();
     public static final LayeredProperties props = initializeProperties();
+    public static final ResourceSheaf res = ResourceSheaf.create(App.class).withMessages().withDefaultLocale().withExtension("u8p");
 
     private static final String PropFileName = "stew.properties";
 
-    private App() { // empty
+    private App() { // empty, forbidden
     }
 
     private static File initializeDirectory() {
@@ -74,8 +80,26 @@ public final class App {
         return dir;
     }
 
+    /**
+     * Returns the specified system file.
+     * @param name name of specified system file
+     * @return
+     */
     public static File getSystemFile(String name) {
         return new File(dir, name);
+    }
+
+    /**
+     * Do sleep millis.
+     * @param millis
+     */
+    public static void sleepMillis(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(ex);
+        }
     }
 
     /**
@@ -83,13 +107,17 @@ public final class App {
      * @return
      */
     public static String getVersion() {
-        return ResourceManager.Default.read("version", "(UNKNOWN)");
+        try (InputStream is = App.class.getResourceAsStream("version")) {
+            return StringUtils.chomp(IOUtils.toString(is, StandardCharsets.ISO_8859_1));
+        } catch (IOException e) {
+            // ignore
+        }
+        return "(UNKNOWN)";
     }
 
     static void showUsage() {
-        ResourceManager res = ResourceManager.Default;
-        System.out.println(res.get("i.usagePrefix") + res.get("i.usage.syntax"));
-        System.out.println(res.get("usage.message"));
+        System.out.println(res.s("i.usagePrefix") + res.s("i.usage.syntax"));
+        System.out.println(res.s("usage.message"));
     }
 
     static int run(String... args) {
@@ -97,7 +125,7 @@ public final class App {
         try {
             opts = OptionSet.parseArguments(args);
         } catch (Exception e) {
-            System.err.println(ResourceManager.Default.get("e.invalid-cli-option", e.getMessage()));
+            System.err.println(res.format("e.invalid-cli-option", e.getMessage()));
             return 1;
         }
         if (opts.isShowVersion()) {
@@ -108,6 +136,8 @@ public final class App {
             return ConsoleLauncher.main(opts);
         } else if (opts.isGui()) {
             WindowLauncher.main(args);
+        } else if (opts.isFx()) {
+            FxLauncher.main(args);
         } else if (opts.isEdit()) {
             ConnectorMapEditor.main(args);
         } else {

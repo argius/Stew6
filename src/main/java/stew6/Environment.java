@@ -2,8 +2,10 @@ package stew6;
 
 import static stew6.App.getSystemFile;
 import java.io.*;
+import java.nio.file.*;
 import java.sql.*;
 import javax.script.*;
+import org.apache.commons.lang3.exception.*;
 import net.argius.stew.*;
 import stew6.ui.*;
 
@@ -15,7 +17,6 @@ public final class Environment {
     static final String ALIAS_PROPERTIES_NAME = "alias.properties";
 
     private static final Logger log = Logger.getLogger(Environment.class);
-    static ResourceManager res = ResourceManager.getInstance(Environment.class);
 
     private OutputProcessor outputProcessor;
     private ConnectorMap connectorMap;
@@ -89,6 +90,7 @@ public final class Environment {
      * @throws SQLException
      */
     void establishConnection(Connector connector) throws SQLException {
+        @SuppressWarnings("resource")
         Connection conn = connector.getConnection();
         try {
             if (connector.isReadOnly()) {
@@ -134,10 +136,7 @@ public final class Environment {
                     log.debug("rollbacked %s (%s)", connector.getId(), conn);
                 } catch (SQLException ex) {
                     log.warn(ex);
-                    Writer w = new StringWriter();
-                    PrintWriter out = new PrintWriter(w);
-                    ex.printStackTrace(out);
-                    outputMessage("e.database", w);
+                    outputMessage("e.database", ExceptionUtils.getStackTrace(ex));
                     outputMessage("w.error-occurred-on-auto-rollback", ex);
                 }
             }
@@ -162,7 +161,7 @@ public final class Environment {
 
     private void outputMessage(String id, Object... args) throws CommandException {
         if (outputProcessor != null) {
-            outputProcessor.output(res.get(id, args));
+            outputProcessor.output(App.res.format(id, args));
         }
     }
 
@@ -192,10 +191,13 @@ public final class Environment {
      * Loads and refreshes connector map.
      */
     public void loadConnectorMap() {
+        if (!Files.exists(ConnectorsConfigFile.getPath())) {
+            ConfigurationConverter.convertConnectorsConfigIfNeeded();
+        }
         ConnectorMap m;
         try {
-            m = ConnectorConfiguration.load();
-        } catch (IOException ex) {
+            m = ConnectorMap.createFromFile();
+        } catch (UncheckedIOException ex) {
             m = new ConnectorMap();
         }
         synchronized (connectorMap) {
@@ -203,7 +205,7 @@ public final class Environment {
                 connectorMap.clear();
             }
             connectorMap.putAll(m);
-            connectorTimestamp = ConnectorConfiguration.lastModified();
+            connectorTimestamp = ConnectorsConfigFile.getLastModified();
         }
     }
 
@@ -213,7 +215,7 @@ public final class Environment {
      * @return whether updated or not
      */
     public boolean updateConnectorMap() {
-        if (ConnectorConfiguration.lastModified() > connectorTimestamp) {
+        if (ConnectorsConfigFile.getLastModified() > connectorTimestamp) {
             loadConnectorMap();
             return true;
         }

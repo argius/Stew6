@@ -15,6 +15,7 @@ public final class ConsoleOutputProcessor implements OutputProcessor {
 
     private boolean quiet;
 
+    @SuppressWarnings("resource")
     @Override
     public void output(Object o) {
         if (o instanceof ResultSetReference) {
@@ -35,6 +36,7 @@ public final class ConsoleOutputProcessor implements OutputProcessor {
     private static void outputResult(ResultSetReference ref) {
         try {
             // result
+            @SuppressWarnings("resource")
             ResultSet rs = ref.getResultSet();
             ColumnOrder order = ref.getOrder();
             ResultSetMetaData rsmeta = rs.getMetaData();
@@ -76,7 +78,7 @@ public final class ConsoleOutputProcessor implements OutputProcessor {
             int count = 0;
             while (rs.next()) {
                 if (count >= limit) {
-                    System.err.println(ResourceManager.Default.get("w.exceeded-limit", limit));
+                    System.err.println(ConsoleLauncher.res.format("w.exceeded-limit", limit));
                     break;
                 }
                 ++count;

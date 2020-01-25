@@ -1,8 +1,8 @@
 package stew6;
 
-import java.io.*;
 import java.text.*;
 import java.util.logging.*;
+import org.apache.commons.lang3.exception.*;
 
 public final class LoggerFormatter extends Formatter {
 
@@ -19,25 +19,11 @@ public final class LoggerFormatter extends Formatter {
 
     @Override
     public String format(LogRecord record) {
-        String stackTraceString;
         Throwable th = record.getThrown();
-        if (th == null) {
-            stackTraceString = "";
-        } else {
-            StringWriter sw = new StringWriter();
-            PrintWriter out = new PrintWriter(sw);
-            out.println();
-            record.getThrown().printStackTrace(out);
-            out.close();
-            stackTraceString = sw.toString();
-        }
-        final String msg = MessageFormat.format(record.getMessage(), record.getParameters()) + stackTraceString;
-        return String.format(format,
-                             record.getMillis(),
-                             record.getLevel().getName(),
-                             record.getSourceClassName(),
-                             record.getSourceMethodName(),
-                             msg);
+        final String sts = (th == null) ? "" : ExceptionUtils.getStackTrace(th);
+        final String msg = MessageFormat.format(record.getMessage(), record.getParameters()) + sts;
+        return String.format(format, record.getMillis(), record.getLevel().getName(), record.getSourceClassName(),
+                             record.getSourceMethodName(), msg);
     }
 
 }

@@ -136,10 +136,7 @@ final class AnyAction extends AbstractAction implements Runnable {
         bind(dst, false, actionKey, keyStrokes);
     }
 
-    void bind(AnyActionListener dst,
-              boolean whenAncestor,
-              Object actionKey,
-              KeyStroke... keyStrokes) {
+    void bind(AnyActionListener dst, boolean whenAncestor, Object actionKey, KeyStroke... keyStrokes) {
         if (!hasInputMap && keyStrokes.length > 0) {
             throw new RuntimeException(editErrorMessage(2, o));
         }
@@ -228,24 +225,18 @@ final class AnyAction extends AbstractAction implements Runnable {
         }
     }
 
-    private static void bind(JComponent src,
-                             AnyActionListener dst,
-                             boolean whenAncestor,
-                             Object actionKey,
+    private static void bind(JComponent src, AnyActionListener dst, boolean whenAncestor, Object actionKey,
                              KeyStroke... keyStrokes) {
         final String key = String.valueOf(actionKey);
         src.getActionMap().put(key, new AnyAction(dst, key));
         bindKeyStroke(src, whenAncestor, key, keyStrokes);
     }
 
-    private static void bindKeyStroke(JComponent src,
-                                      boolean whenAncestor,
-                                      String actionKeyString,
+    private static void bindKeyStroke(JComponent src, boolean whenAncestor, String actionKeyString,
                                       KeyStroke... keyStrokes) {
         if (keyStrokes != null) {
-            final int focusMode = whenAncestor
-                    ? JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-                    : JComponent.WHEN_FOCUSED;
+            final int focusMode = whenAncestor ? JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+                                               : JComponent.WHEN_FOCUSED;
             for (KeyStroke ks : keyStrokes) {
                 src.getInputMap(focusMode).put(ks, actionKeyString);
             }

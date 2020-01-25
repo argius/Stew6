@@ -51,7 +51,7 @@ public final class Time extends Command {
         try (Statement stmt = prepareStatement(conn, sql)) {
             final long beginningTime;
             final long endTime;
-            if (isSelect(sql)) {
+            if (mayReturnResultSet(sql)) {
                 beginningTime = System.currentTimeMillis();
                 try (ResultSet rs = executeQuery(stmt, sql)) {
                     endTime = System.currentTimeMillis();
@@ -71,7 +71,7 @@ public final class Time extends Command {
 
     private void tryManyTimes(Connection conn, String sql, int times) throws SQLException {
         log.debug("tryManyTimes");
-        final boolean isSelect = isSelect(sql);
+        final boolean mayReturnResultSet = mayReturnResultSet(sql);
         try (Statement stmt = prepareStatement(conn, sql)) {
             long total = 0;
             long maximum = 0;
@@ -80,7 +80,7 @@ public final class Time extends Command {
                 final long beginningTime;
                 final long endTime;
                 log.trace("beginning: %d", i);
-                if (isSelect) {
+                if (mayReturnResultSet) {
                     beginningTime = System.currentTimeMillis();
                     try (ResultSet rs = executeQuery(stmt, sql)) {
                         endTime = System.currentTimeMillis();

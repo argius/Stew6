@@ -18,27 +18,12 @@ public final class TestUtils {
 
     public static Connection connection() throws SQLException {
         return initOrReuseConnection();
-//        Connection conn = DriverManager.getConnection("jdbc:h2:mem:test", "sa", "sa");
-//        if (!inited) {
-//            try (Statement stmt = conn.createStatement()) {
-//                stmt.executeUpdate("create table table1 (id bigint primary key, name varchar(32))");
-//                stmt.executeUpdate("insert into table1 values (1, 'argius')");
-//                stmt.executeUpdate("create table table2 (id bigint primary key, filedata blob)");
-//                stmt.executeUpdate("insert into table2 (id) values (1)");
-//            }
-//            conn.commit();
-////            inited = true;
-//        }
-//        return conn;
     }
 
     private static final Object guardian = new Object();
     static Connection conn;
 
     private static Connection initOrReuseConnection() throws SQLException {
-//        if (conn != null) {
-//            return conn;
-//        }
         synchronized (guardian) {
             Connection c;
             c = DriverManager.getConnection("jdbc:h2:mem:test", "sa", "sa");
@@ -103,6 +88,7 @@ public final class TestUtils {
 
         private StringBuilder buffer = new StringBuilder();
 
+        @SuppressWarnings("resource")
         @Override
         public void output(Object o) {
             ensureOpen();
@@ -117,6 +103,7 @@ public final class TestUtils {
 
         void outputResultSetReference(ResultSetReference ref) {
             try {
+                @SuppressWarnings("resource")
                 ResultSet rs = ref.getResultSet();
                 ColumnOrder order = ref.getOrder();
                 final boolean needsOrderChange = order.size() > 0;

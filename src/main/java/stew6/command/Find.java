@@ -15,12 +15,9 @@ public final class Find extends Command {
 
     @Override
     public void execute(Connection conn, Parameter p) throws CommandException {
-        try {
-            ResultSetReference ref = getResult(conn, p);
-            try (ResultSet rs = ref.getResultSet()) {
-                output(ref);
-                outputMessage("i.selected", ref.getRecordCount());
-            }
+        try (ResultSetReference ref = getResult(conn, p)) {
+            output(ref);
+            outputMessage("i.selected", ref.getRecordCount());
         } catch (SQLException ex) {
             throw new CommandException(ex);
         }
@@ -48,6 +45,7 @@ public final class Find extends Command {
             log.debug("catalog: " + catalogNamePattern);
             log.debug("full?  : " + isFull);
         }
+        @SuppressWarnings("resource")
         ResultSet rs = dbmeta.getTables(catalogNamePattern, schemaNamePattern, tableNamePattern, tableTypes);
         try {
             ResultSetReference ref = new ResultSetReference(rs, p.asString());

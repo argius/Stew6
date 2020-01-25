@@ -18,7 +18,9 @@ public final class CsvExporter extends Exporter {
     protected CsvExporter(OutputStream os, char delimiter) {
         super(os);
         try {
-            this.csv = new CSVPrinter(new PrintWriter(os), getFormat(delimiter));
+            @SuppressWarnings("resource")
+            PrintWriter out = new PrintWriter(os);
+            this.csv = new CSVPrinter(out, getFormat(delimiter));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

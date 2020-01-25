@@ -6,7 +6,6 @@ import java.nio.charset.*;
 import java.nio.file.*;
 import java.util.*;
 import stew6.*;
-import stew6.text.*;
 
 /**
  * The Exporter for HTML.
@@ -37,7 +36,7 @@ public final class HtmlExporter extends Exporter {
     }
 
     private void writeBeginning() {
-        String appName = ResourceManager.Default.get(".title");
+        String appName = App.res.s(".title");
         out.println("<!DOCTYPE html>");
         out.println("<html>");
         out.println("<head>");
@@ -75,7 +74,7 @@ public final class HtmlExporter extends Exporter {
                     lines = Files.readAllLines(Paths.get(cssUri), StandardCharsets.UTF_8);
                 }
                 String eol = String.format("%n");
-                style.append(eol).append(TextUtilities.join(eol, lines)).append(eol);
+                style.append(eol).append(String.join(eol, lines)).append(eol);
             } catch (Exception ex) {
                 style.append("/* URI=").append(cssUri).append(" */");
                 style.append("/* ").append(ex).append(" */");

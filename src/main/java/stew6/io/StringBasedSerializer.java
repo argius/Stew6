@@ -59,12 +59,9 @@ public final class StringBasedSerializer {
         } else {
             name = Element.OBJECT;
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            try {
+            try (ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                 oos.writeObject(object);
                 value = toHexString(bos.toByteArray());
-            } finally {
-                oos.close();
             }
         }
         return new Element(name, value);
@@ -113,15 +110,12 @@ public final class StringBasedSerializer {
             o = new Date(Long.parseLong(value));
         } else if (name.equals(Element.OBJECT)) {
             ByteArrayInputStream bis = new ByteArrayInputStream(toBytes(value));
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            try {
+            try (ObjectInputStream ois = new ObjectInputStream(bis)) {
                 o = ois.readObject();
             } catch (ClassNotFoundException ex) {
                 IOException ioe = new IOException(ex.getMessage());
                 ioe.initCause(ex);
                 throw ioe;
-            } finally {
-                ois.close();
             }
         } else {
             throw new IOException("unknown element : " + name);

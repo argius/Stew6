@@ -3,6 +3,7 @@ package stew6;
 import java.io.*;
 import java.util.*;
 import java.util.Map.*;
+import java.util.stream.*;
 import net.argius.stew.*;
 
 /**
@@ -36,7 +37,7 @@ final class AliasMap {
             key = new Parameter(buffer.toString()).at(0);
             if (--limitCount < 0) {
                 final String mkey = "e.alias-circulation-reference";
-                throw new CommandException(ResourceManager.Default.get(mkey, limit));
+                throw new CommandException(App.res.format(mkey, limit));
             }
         }
         return buffer.toString();
@@ -63,11 +64,7 @@ final class AliasMap {
     }
 
     Set<String> keys() {
-        Set<String> set = new LinkedHashSet<>();
-        for (final Object o : Collections.list(properties.propertyNames())) {
-            set.add((String)o);
-        }
-        return set;
+        return properties.keySet().stream().map(x -> (String)x).collect(Collectors.toSet());
     }
 
     Set<Entry<Object, Object>> entrySet() {
@@ -75,12 +72,9 @@ final class AliasMap {
     }
 
     void load() throws IOException {
-        InputStream is = new FileInputStream(file);
-        try {
+        try (InputStream is = new FileInputStream(file)) {
             properties.clear();
             properties.load(is);
-        } finally {
-            is.close();
         }
         timestamp = file.lastModified();
     }
@@ -104,11 +98,8 @@ final class AliasMap {
             }
             return;
         }
-        OutputStream os = new FileOutputStream(file);
-        try {
+        try (OutputStream os = new FileOutputStream(file)) {
             properties.store(os, "");
-        } finally {
-            os.close();
         }
         timestamp = file.lastModified();
     }
@@ -116,6 +107,5 @@ final class AliasMap {
     boolean updated() {
         return file.lastModified() > timestamp;
     }
-
 
 }

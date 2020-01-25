@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.channels.*;
 import java.sql.*;
 import java.util.*;
+import minestra.text.*;
 import stew6.*;
 import stew6.io.*;
 import stew6.ui.*;
@@ -16,7 +17,7 @@ public abstract class Command implements AutoCloseable {
     protected Environment env;
     protected OutputProcessor op;
 
-    private static final ResourceManager res = ResourceManager.getInstance(Command.class);
+    private static final ResourceSheaf res = App.res.derive().withClass(Command.class);
 
     /**
      * A constructor.
@@ -49,19 +50,6 @@ public abstract class Command implements AutoCloseable {
     @Override
     public void close() throws CommandException {
         // empty
-    }
-
-    /**
-     * Invokes this command.
-     * @param env
-     * @param parameterString
-     * @return true if it continues, or false if exit this application
-     * @throws CommandException
-     * @deprecated use {@link Commands#invoke}
-     */
-    @Deprecated // Remove this, scheduled till the release of version 5.0.0-RC1
-    public static boolean invoke(Environment env, String parameterString) throws CommandException {
-        return Commands.invoke(env, parameterString);
     }
 
     /**
@@ -143,7 +131,7 @@ public abstract class Command implements AutoCloseable {
      * @return
      */
     protected static String getMessage(String key, Object... args) {
-        return res.get(key, args);
+        return res.format(key, args);
     }
 
     /**
@@ -172,6 +160,25 @@ public abstract class Command implements AutoCloseable {
      */
     protected String getUsage() {
         return getMessage("usage." + getClass().getSimpleName());
+    }
+
+    /**
+     * Returns whether executing SQL may return ResutSet or not.
+     * @param sql
+     * @return
+     */
+    public static boolean mayReturnResultSet(String sql) {
+        return startsTableValueConstructor(sql) || isSelect(sql);
+    }
+
+    /**
+     * Returns whether SQL starts Table Value Constructor or not.
+     * @param sql
+     * @return
+     */
+    public static boolean startsTableValueConstructor(String sql) {
+        String s = sql.replaceAll("[\r\n]", " ").replaceAll("/\\*.*?\\*/", "");
+        return s.matches("(?i)\\s*VALUES\\s*?\\(.*");
     }
 
     /**
@@ -205,6 +212,7 @@ public abstract class Command implements AutoCloseable {
     @Deprecated
     protected static String readFileAsString(File file) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        @SuppressWarnings("resource")
         FileInputStream fis = new FileInputStream(file);
         try {
             fis.getChannel().transferTo(0, file.length(), Channels.newChannel(bos));
@@ -223,9 +231,8 @@ public abstract class Command implements AutoCloseable {
      */
     protected final Statement prepareStatement(Connection conn, String sql) throws SQLException {
         final int index = sql.indexOf(';');
-        Statement stmt = (index >= 0)
-                ? conn.prepareStatement(sql.substring(0, index))
-                : conn.createStatement();
+        @SuppressWarnings("resource")
+        Statement stmt = (index >= 0) ? conn.prepareStatement(sql.substring(0, index)) : conn.createStatement();
         try {
             if (stmt instanceof PreparedStatement) {
                 PreparedStatement pstmt = (PreparedStatement)stmt;
@@ -261,9 +268,7 @@ public abstract class Command implements AutoCloseable {
      */
     @SuppressWarnings("static-method")
     protected ResultSet executeQuery(Statement stmt, String sql) throws SQLException {
-        return (stmt instanceof PreparedStatement)
-                ? ((PreparedStatement)stmt).executeQuery()
-                : stmt.executeQuery(sql);
+        return (stmt instanceof PreparedStatement) ? ((PreparedStatement)stmt).executeQuery() : stmt.executeQuery(sql);
     }
 
     /**
@@ -275,9 +280,8 @@ public abstract class Command implements AutoCloseable {
      */
     @SuppressWarnings("static-method")
     protected int executeUpdate(Statement stmt, String sql) throws SQLException {
-        return (stmt instanceof PreparedStatement)
-                ? ((PreparedStatement)stmt).executeUpdate()
-                : stmt.executeUpdate(sql);
+        return (stmt instanceof PreparedStatement) ? ((PreparedStatement)stmt).executeUpdate()
+                                                   : stmt.executeUpdate(sql);
     }
 
 }

@@ -29,6 +29,7 @@ public final class CsvExporterTest {
     @Test
     public void testClose() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        @SuppressWarnings("resource")
         CsvExporter exporter = new CsvExporter(bos);
         exporter.close();
     }

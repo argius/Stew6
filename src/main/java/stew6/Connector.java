@@ -1,12 +1,14 @@
 package stew6;
 
+import java.io.*;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
+import org.apache.commons.lang3.*;
 import net.argius.stew.*;
 
 /**
- * This class provides functions to manage database connections in this application. 
+ * This class provides functions to manage database connections in this application.
  */
 public final class Connector {
 
@@ -26,7 +28,7 @@ public final class Connector {
     public Connector(String id, Properties props) {
         assert id != null;
         if (!id.matches("[A-Za-z0-9]+")) { // XXX move to new public method isValid
-            throw new IllegalArgumentException(ResourceManager.Default.get("e.id-can-only-contain-alphanum", id));
+            throw new IllegalArgumentException(App.res.format("e.id-can-only-contain-alphanum", id));
         }
         Properties p = new Properties();
         p.putAll(props);
@@ -79,6 +81,14 @@ public final class Connector {
      */
     public String getClasspath() {
         return props.getProperty("classpath", "");
+    }
+
+    /**
+     * Returns the classpathref.
+     * @return
+     */
+    public String getClasspathref() {
+        return props.getProperty("classpathref", "");
     }
 
     /**
@@ -148,7 +158,18 @@ public final class Connector {
      */
     public Connection getConnection() throws SQLException {
         if (driver == null) {
-            driver = ConnectorDriverManager.getDriver(getUrl(), getDriver(), getClasspath());
+            final String classpath;
+            String classpathref = getClasspathref();
+            if (StringUtils.isBlank(classpathref)) {
+                classpath = getClasspath();
+            } else {
+                try {
+                    classpath = ClasspathrefConfigFile.read().get(classpathref);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+            driver = ConnectorDriverManager.getDriver(getUrl(), getDriver(), classpath);
             if (driver == null) {
                 throw new SQLException("failed to load driver");
             }
@@ -174,16 +195,12 @@ public final class Connector {
      * @return future object of the result message
      */
     public Future<String> tryOutConnection() {
-        ExecutorService executor = Executors.newSingleThreadExecutor(DaemonThreadFactory.getInstance());
-        return executor.submit(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                try (Connection conn = getConnection()) {
-                    DatabaseMetaData dbmeta = conn.getMetaData();
-                    String productName = dbmeta.getDatabaseProductName();
-                    String productVersion = dbmeta.getDatabaseProductVersion();
-                    return ResourceManager.Default.get("i.succeeded-try-out-connect", productName, productVersion);
-                }
+        return Executors.newSingleThreadExecutor(DaemonThreadFactory.getInstance()).submit(() -> {
+            try (Connection conn = getConnection()) {
+                DatabaseMetaData dbmeta = conn.getMetaData();
+                String productName = dbmeta.getDatabaseProductName();
+                String productVersion = dbmeta.getDatabaseProductVersion();
+                return App.res.format("i.succeeded-try-out-connect", productName, productVersion);
             }
         });
     }

@@ -5,7 +5,7 @@ import java.sql.*;
 /**
  * This object holds the reference of ResultSet.
  */
-public final class ResultSetReference {
+public final class ResultSetReference implements AutoCloseable {
 
     private final ResultSet rs;
     private final ColumnOrder order;
@@ -62,6 +62,14 @@ public final class ResultSetReference {
      */
     public void setRecordCount(int recordCount) {
         this.recordCount = recordCount;
+    }
+
+    @Override
+    public void close() throws SQLException {
+        if (rs.isClosed()) {
+            throw new IllegalStateException("already closed");
+        }
+        rs.close();
     }
 
 }

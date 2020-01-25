@@ -9,7 +9,6 @@ import org.hamcrest.*;
 import org.junit.*;
 import org.junit.rules.*;
 import stew6.*;
-import stew6.text.*;
 import stew6.ui.swing.WindowLauncher.*;
 
 public class WindowLauncherTest {
@@ -69,7 +68,7 @@ public class WindowLauncherTest {
         Configuration config = new Configuration();
         final File f = new File(dir, "stew5-config.xml");
         config.saveTo(f);
-        String result = TextUtilities.join("%n", Files.readAllLines(f.toPath(), StandardCharsets.UTF_8));
+        String result = String.join("%n", Files.readAllLines(f.toPath(), StandardCharsets.UTF_8));
         assertThat(result, Matchers.containsString("java.util.HashMap"));
         assertThat(result, Matchers.containsString("showInfoTree"));
         assertThat(result, Matchers.containsString("location"));

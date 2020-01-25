@@ -61,10 +61,9 @@ public class LoadTest {
         final String testName = TestUtils.getCurrentMethodString(new Exception());
         Load cmdLoad = (Load)cmd;
         File f = tmpFolder.newFile(testName + ".csv");
-        try (Connection conn = connection()) {
+        try (Connection conn = connection(); PreparedStatement stmt = conn.prepareStatement("insert into table1 values (?, ?)")) {
             TestUtils.setConnectionToEnv(conn, env); // for using Commands.invoke
             TestUtils.writeLines(f.toPath(), "2,Bob", "3,Chris");
-            PreparedStatement stmt = conn.prepareStatement("insert into table1 values (?, ?)");
             try (Importer importer = Importer.getImporter(f)) {
                 cmdLoad.insertRecords(stmt, importer);
             }

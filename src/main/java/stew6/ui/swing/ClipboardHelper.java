@@ -21,24 +21,13 @@ final class ClipboardHelper {
                 log.trace("received from clipboard: [%s]", o);
             }
             return (String)o;
-        } catch (UnsupportedFlavorException ex) {
-            throw new RuntimeException("at ClipboardHelper.getString", ex);
-        } catch (IOException ex) {
+        } catch (UnsupportedFlavorException | IOException ex) {
             throw new RuntimeException("at ClipboardHelper.getString", ex);
         }
     }
 
     static void setStrings(Iterable<String> rows) {
-        StringWriter buffer = new StringWriter();
-        PrintWriter out = new PrintWriter(buffer);
-        try {
-            for (String s : rows) {
-                out.println(s);
-            }
-        } finally {
-            out.close();
-        }
-        setString(buffer.toString().replaceFirst("[\\r\\n]+$", ""));
+        setString(String.join(String.format("%n"), rows));
     }
 
     static void setString(String s) {
@@ -55,9 +44,7 @@ final class ClipboardHelper {
         Transferable content = clipboard.getContents(null);
         try {
             return DataFlavor.stringFlavor.getReaderForText(content);
-        } catch (UnsupportedFlavorException ex) {
-            throw new RuntimeException("at ClipboardHelper.getReaderForText", ex);
-        } catch (IOException ex) {
+        } catch (UnsupportedFlavorException | IOException ex) {
             throw new RuntimeException("at ClipboardHelper.getReaderForText", ex);
         }
     }

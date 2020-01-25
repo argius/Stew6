@@ -2,6 +2,7 @@ package stew6.ui.console;
 
 import java.io.*;
 import jline.console.*;
+import minestra.text.*;
 import stew6.*;
 import stew6.ui.*;
 
@@ -10,7 +11,9 @@ import stew6.ui.*;
  */
 public final class ConsoleLauncher implements Launcher {
 
-    private static Logger log = Logger.getLogger(ConsoleLauncher.class);
+    static final ResourceSheaf res = App.res.derive().withClass(ConsoleLauncher.class);
+
+    private static final Logger log = Logger.getLogger(ConsoleLauncher.class);
     private static final boolean END = false;
 
     @Override
@@ -64,7 +67,7 @@ public final class ConsoleLauncher implements Launcher {
             op.setQuiet(quiet);
             env.setOutputProcessor(op);
             if (!quiet) {
-                final String about = ResourceManager.Default.get(".about", App.getVersion());
+                final String about = res.format(".about", App.getVersion());
                 env.getOutputProcessor().output(about);
             }
             String connectorName = opts.getConnecterName();

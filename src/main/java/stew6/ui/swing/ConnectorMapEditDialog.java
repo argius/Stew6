@@ -8,8 +8,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.function.*;
 import javax.swing.*;
 import javax.swing.event.*;
+import minestra.text.*;
 import stew6.*;
 import stew6.io.*;
 
@@ -19,8 +21,11 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
         addNew, modify, rename, remove, up, down, submit, cancel
     }
 
-    private static final ResourceManager res = ResourceManager.getInstance(ConnectorMapEditDialog.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(ConnectorMapEditDialog.class);
 
+    private final Consumer<String> showErrorMessage = x -> showMessageDialog(this, x, null, ERROR_MESSAGE);
+    private final Pred<String> confirmYes = x -> showConfirmDialog(this, x, "", YES_NO_OPTION) == YES_OPTION;
+    private final BinaryOperator<String> showInputDialog = (x, y) -> showInputDialog(this, x, y);
     private final ConnectorMap connectorMap;
     private final JList<ConnectorEntry> idList;
     private final DefaultListModel<ConnectorEntry> listModel;
@@ -32,7 +37,7 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
         this.connectorMap = new ConnectorMap(env.getConnectorMap());
         this.idList = new JList<>(listModel);
         this.listModel = listModel;
-        setTitle(res.get("title"));
+        setTitle(res.s("title"));
         setResizable(false);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         FlexiblePanel p = new FlexiblePanel();
@@ -46,9 +51,7 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
         for (ConnectorEntry entry : ConnectorEntry.toList(connectorMap.values())) {
             listModel.addElement(entry);
         }
-        JScrollPane pane = new JScrollPane(idList,
-                                           VERTICAL_SCROLLBAR_ALWAYS,
-                                           HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane pane = new JScrollPane(idList, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
         pane.setWheelScrollingEnabled(true);
         idList.addMouseListener(new IdListMouseListener());
         p.addComponent(pane, false);
@@ -98,19 +101,18 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
     @Override
     public void anyActionPerformed(AnyActionEvent ev) {
         if (ev.isAnyOf(addNew)) {
-            final String id = showInputDialog(this, res.get("i.input-new-connector-id"));
+            final String id = showInputDialog.apply(res.s("i.input-new-connector-id"), "");
             if (id == null) {
                 return;
             }
             if (connectorMap.containsKey(id)) {
-                final String message = res.get("e.id-already-exists", id);
-                showMessageDialog(this, message, null, ERROR_MESSAGE);
+                showErrorMessage.accept(res.format("e.id-already-exists", id));
             } else {
                 Connector connector;
                 try {
                     connector = new Connector(id, new Properties());
                 } catch (IllegalArgumentException ex) {
-                    showMessageDialog(this, ex.getMessage(), null, ERROR_MESSAGE);
+                    showErrorMessage.accept(ex.getMessage());
                     return;
                 }
                 openConnectorEditDialog(connector);
@@ -126,9 +128,7 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
                 return;
             }
             ConnectorEntry entry = (ConnectorEntry)o;
-            final String newId = showInputDialog(this,
-                                                 res.get("i.input-new-connector-id"),
-                                                 entry.getId());
+            final String newId = showInputDialog.apply(res.s("i.input-new-connector-id"), entry.getId());
             if (newId == null || newId.equals(entry.getId())) {
                 return;
             }
@@ -139,13 +139,13 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
             try {
                 newConnector = new Connector(newId, entry.getConnector());
             } catch (IllegalArgumentException ex) {
-                showMessageDialog(this, ex.getMessage(), null, ERROR_MESSAGE);
+                showErrorMessage.accept(ex.getMessage());
                 return;
             }
             m.set(m.indexOf(entry), new ConnectorEntry(newId, newConnector));
             idList.repaint();
         } else if (ev.isAnyOf(remove)) {
-            if (showConfirmDialog(this, res.get("i.confirm-remove"), "", OK_CANCEL_OPTION) != OK_OPTION) {
+            if (!confirmYes.exam(res.s("i.confirm-remove"))) {
                 return;
             }
             ConnectorEntry selected = idList.getSelectedValue();
@@ -184,7 +184,7 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
 
     private JButton createJButton(Object cmdObject) {
         final String cmd = String.valueOf(cmdObject);
-        JButton button = new JButton(res.get("button." + cmd));
+        JButton button = new JButton(res.s("button." + cmd));
         button.setActionCommand(cmd);
         button.addActionListener(new AnyAction(this));
         return button;
@@ -235,13 +235,12 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
 
     private void requestClose(boolean withSaving) {
         if (withSaving) {
-            if (showConfirmDialog(this, res.get("i.confirm-save"), "", YES_NO_OPTION) != YES_OPTION) {
+            if (!confirmYes.exam(res.s("i.confirm-save"))) {
                 return;
             }
             File systemDirectory = App.getSystemDirectory();
             if (!systemDirectory.exists()) {
-                String msg = res.get("i.confirm.makesystemdir", systemDirectory);
-                if (showConfirmDialog(this, msg, "", YES_NO_OPTION) == OK_OPTION) {
+                if (confirmYes.exam(res.format("i.confirm.makesystemdir", systemDirectory))) {
                     try {
                         FileUtilities.makeDirectory(systemDirectory);
                     } catch (IOException ex) {
@@ -258,22 +257,13 @@ final class ConnectorMapEditDialog extends JDialog implements ChangeListener, An
                 final String id = entry.getId();
                 m.setConnector(id, connectorMap.getConnector(id));
             }
-            try {
-                ConnectorConfiguration.save(m);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            m.saveToFile();
             connectorMap.clear();
             connectorMap.putAll(m);
         } else {
-            ConnectorMap fileContent;
-            try {
-                fileContent = ConnectorConfiguration.load();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            ConnectorMap fileContent = ConnectorMap.createFromFile();
             if (!connectorMap.equals(fileContent)) {
-                if (showConfirmDialog(this, res.get("i.confirm-without-save"), "", OK_CANCEL_OPTION) != OK_OPTION) {
+                if (!confirmYes.exam(res.s("i.confirm-without-save"))) {
                     return;
                 }
             }

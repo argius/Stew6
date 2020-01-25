@@ -116,11 +116,11 @@ public final class DynamicLoader {
     private static final class GettingURLClassLoaderPrivilegedAction implements PrivilegedAction<Object> {
 
         private final URL[] urls;
-    
+
         GettingURLClassLoaderPrivilegedAction(URL[] urls) {
             this.urls = urls;
         }
-    
+
         @Override
         public Object run() {
             return new URLClassLoader(urls, ClassLoader.getSystemClassLoader());

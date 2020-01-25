@@ -2,17 +2,18 @@ package stew6.ui.swing;
 
 import static java.awt.event.InputEvent.*;
 import java.awt.*;
-import java.util.concurrent.*;
 import javax.swing.*;
 
 final class Utilities {
 
-    private Utilities() {
-    } // forbidden
+    static final Class<Utilities> CLASS = Utilities.class;
+
+    private Utilities() { // empty, forbidden
+    }
 
     static ImageIcon getImageIcon(String name) {
         try {
-            return new ImageIcon(Utilities.class.getResource("icon/" + name));
+            return new ImageIcon(CLASS.getResource("icon/" + name));
         } catch (RuntimeException ex) {
             return new ImageIcon();
         }
@@ -37,15 +38,6 @@ final class Utilities {
 
     static int getMenuShortcutKeyMask() {
         return Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-    }
-
-    static void sleep(long interval) {
-        try {
-            TimeUnit.MILLISECONDS.sleep(interval);
-        } catch (InterruptedException ex) {
-            // expects no interruption
-            assert false : ex.toString();
-        }
     }
 
 }

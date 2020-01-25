@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.*;
+import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.io.*;
@@ -13,7 +14,7 @@ import stew6.io.*;
  */
 public final class ConnectorMapEditor {
 
-    private static final ResourceManager res = ResourceManager.getInstance(ConnectorMapEditor.class);
+    private static final ResourceSheaf res = ConsoleLauncher.res.derive().withClass(ConnectorMapEditor.class);
     private static final String[] PROP_KEYS = {"name", "classpath", "driver", "url", "user",
                                                "password", "readonly", "rollback"};
 
@@ -21,15 +22,11 @@ public final class ConnectorMapEditor {
 
     private ConnectorMap oldContent;
 
-    private ConnectorMapEditor() throws IOException {
-        ConnectorMap m;
-        try {
-            m = ConnectorConfiguration.load();
-        } catch (FileNotFoundException ex) {
+    private ConnectorMapEditor() {
+        if (!ConnectorMap.existsFile()) {
             printMessage("main.notice.filenotexists");
-            printLine(String.format("(%s)", ex.getMessage()));
-            m = new ConnectorMap();
         }
+        ConnectorMap m = ConnectorMap.createFromFile();
         this.oldContent = m;
         this.map = new ConnectorMap(this.oldContent);
     }
@@ -46,7 +43,7 @@ public final class ConnectorMapEditor {
             printMessage("property.start2");
             for (String key : PROP_KEYS) {
                 String value = props.getProperty(key);
-                print(res.get("property.input", key, value));
+                print(res.format("property.input", key, value));
                 String input = getInput("");
                 if (input != null && input.length() > 0) {
                     props.setProperty(key, input);
@@ -65,7 +62,7 @@ public final class ConnectorMapEditor {
                             printLine(future.get(timeoutSeconds, TimeUnit.SECONDS));
                             break;
                         } catch (TimeoutException ex) {
-                            if (!confirmYes(res.get("i.confirm.retry-timeout", timeoutSeconds))) {
+                            if (!confirmYes(res.format("i.confirm.retry-timeout", timeoutSeconds))) {
                                 break;
                             }
                         }
@@ -191,14 +188,14 @@ public final class ConnectorMapEditor {
         } else if (confirmYes("proc.save.confirm")) {
             File systemDirectory = App.getSystemDirectory();
             if (!systemDirectory.exists()) {
-                if (confirmYes(res.get("i.confirm.makesystemdir", systemDirectory))) {
+                if (confirmYes(res.format("i.confirm.makesystemdir", systemDirectory))) {
                     FileUtilities.makeDirectory(systemDirectory);
                 } else {
                     printMessage("proc.save.canceled");
                     return;
                 }
             }
-            ConnectorConfiguration.save(map);
+            map.saveToFile();
             oldContent = new ConnectorMap(map);
             printMessage("proc.save.finished");
         } else {
@@ -211,7 +208,7 @@ public final class ConnectorMapEditor {
      * @throws IOException
      */
     private void proceedLoad() throws IOException {
-        ConnectorMap m = ConnectorConfiguration.load();
+        ConnectorMap m = ConnectorMap.createFromFile();
         if (m.equals(oldContent) && m.equals(map)) {
             printMessage("proc.nomodification");
             return;
@@ -219,7 +216,7 @@ public final class ConnectorMapEditor {
         printMessage("proc.load.confirm1");
         if (confirmYes("proc.load.confirm2")) {
             map.clear();
-            map.putAll(ConnectorConfiguration.load());
+            map.putAll(ConnectorMap.createFromFile());
             printMessage("proc.load.finished");
         } else {
             printMessage("proc.load.canceled");
@@ -234,9 +231,9 @@ public final class ConnectorMapEditor {
      */
     private static String getInput(String messageId, Object... args) {
         if (messageId.length() > 0) {
-            print(res.get(messageId, args));
+            print(res.format(messageId, args));
         }
-        print(res.get("proc.prompt"));
+        print(res.s("proc.prompt"));
         @SuppressWarnings("resource")
         Scanner scanner = new Scanner(System.in);
         if (scanner.hasNextLine()) {
@@ -252,7 +249,7 @@ public final class ConnectorMapEditor {
      */
     private static boolean confirmYes(String messageId) {
         if (messageId.length() > 0) {
-            print(res.get(messageId));
+            print(res.s(messageId));
         }
         print("(y/N)");
         return getInput("").equalsIgnoreCase("y");
@@ -271,7 +268,7 @@ public final class ConnectorMapEditor {
     }
 
     private static void printMessage(String messageId, Object... args) {
-        printLine(res.get(messageId, args));
+        printLine(res.format(messageId, args));
     }
 
     /**

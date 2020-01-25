@@ -6,12 +6,13 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 import javax.swing.undo.*;
+import minestra.text.*;
 import stew6.*;
 
 final class ContextMenu {
 
     private static final Logger log = Logger.getLogger(ContextMenu.class);
-    private static final ResourceManager res = ResourceManager.getInstance(ContextMenu.class);
+    private static final ResourceSheaf res = WindowLauncher.res.derive().withClass(ContextMenu.class);
 
     private ContextMenu() {
     } // forbidden
@@ -31,7 +32,8 @@ final class ContextMenu {
         menu.setName("ContextMenuOf" + name);
         Map<String, KeyStroke> keyBounds = extractKeyBinds(target);
         AnyAction aa = new AnyAction(dst);
-        for (JMenuItem o : Menu.createJMenuItems(res, name)) {
+        MenuItemFactory mif = new MenuItemFactory(res);
+        for (JMenuItem o : mif.createJMenuItems(name)) {
             if (o == null) {
                 menu.add(new JSeparator());
                 continue;
@@ -78,7 +80,8 @@ final class ContextMenu {
     static JPopupMenu createForText(JTextComponent text, UndoManager um) {
         JPopupMenu menu = new JPopupMenu();
         TextPopupMenuListener textPopupListener = new TextPopupMenuListener(text, um);
-        for (JMenuItem o : Menu.createJMenuItems(res, "TextComponent")) {
+        MenuItemFactory mif = new MenuItemFactory(res);
+        for (JMenuItem o : mif.createJMenuItems("TextComponent")) {
             if (o == null) {
                 menu.add(new JSeparator());
                 continue;

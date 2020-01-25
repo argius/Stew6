@@ -7,7 +7,9 @@ import java.util.regex.*;
 
 /**
  * ConnectorConfiguration is a helper for ConnectorMap.
+ * @deprecated use {@link ConnectorsConfig} instead
  */
+@Deprecated // ConnectorConfiguration will be removed until v6.0.0-RC1
 public final class ConnectorConfiguration {
 
     static final String CONNECTOR_PROPERTIES_NAME = "connector.properties";
@@ -22,11 +24,8 @@ public final class ConnectorConfiguration {
     public static ConnectorMap load() throws IOException {
         final File f = getPath();
         if (f.exists()) {
-            InputStream is = new FileInputStream(f);
-            try {
+            try (InputStream is = new FileInputStream(f)) {
                 return load(is);
-            } finally {
-                is.close();
             }
         }
         return new ConnectorMap();
@@ -49,8 +48,7 @@ public final class ConnectorConfiguration {
         byte[] data = bos.toByteArray();
         // create ID list
         List<String> idList = new ArrayList<>();
-        Scanner scanner = new Scanner(new ByteArrayInputStream(data));
-        try {
+        try (Scanner scanner = new Scanner(new ByteArrayInputStream(data))) {
             while (scanner.hasNextLine()) {
                 final String line = scanner.nextLine();
                 Matcher matcher = idPattern.matcher(line);
@@ -58,8 +56,6 @@ public final class ConnectorConfiguration {
                     idList.add(matcher.group(1));
                 }
             }
-        } finally {
-            scanner.close();
         }
         // read as Properties
         Properties props = new Properties();
@@ -78,11 +74,8 @@ public final class ConnectorConfiguration {
         save(bos, map);
         byte[] bytes = bos.toByteArray();
         ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        FileOutputStream fos = new FileOutputStream(getPath());
-        try {
+        try (FileOutputStream fos = new FileOutputStream(getPath())) {
             fos.getChannel().transferFrom(Channels.newChannel(bis), 0, bytes.length);
-        } finally {
-            fos.close();
         }
     }
 
@@ -98,6 +91,7 @@ public final class ConnectorConfiguration {
         map.toProperties().store(bos, "");
         // lines to elements
         List<String> lines = new ArrayList<>();
+        @SuppressWarnings("resource")
         Scanner scanner = new Scanner(new ByteArrayInputStream(bos.toByteArray()));
         try {
             while (scanner.hasNextLine()) {
@@ -112,6 +106,7 @@ public final class ConnectorConfiguration {
         // rewrites records sorted by ID
         Comparator<String> c = new ConnectorPropertyComparator(new ArrayList<>(map.keySet()));
         Collections.sort(lines, c);
+        @SuppressWarnings("resource")
         PrintWriter out = new PrintWriter(os);
         try {
             for (String line : lines) {
@@ -131,9 +126,7 @@ public final class ConnectorConfiguration {
         return App.getSystemFile(CONNECTOR_PROPERTIES_NAME);
     }
 
-    private static final class ConnectorPropertyComparator implements
-                                                          Comparator<String>,
-                                                          Serializable {
+    private static final class ConnectorPropertyComparator implements Comparator<String>, Serializable {
 
         private final List<String> idList;
 
