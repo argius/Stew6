@@ -47,7 +47,7 @@ public final class XmlExporterTest {
         final String x1;
         x1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
              + "<!DOCTYPE table >"
-             + "<table writer=\"stew5.io.XmlExporter\" /><item />";
+             + "<table writer=\"stew6.io.XmlExporter\" /><item />";
         try {
             validator.validate(new StreamSource(new StringReader(x1)));
             fail("invalid XML should be thrown SAXException");
@@ -57,7 +57,7 @@ public final class XmlExporterTest {
         // invalid XML 2 (no DOCTYPE)
         final String x2;
         x2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-             + "<table writer=\"stew5.io.XmlExporter\">"
+             + "<table writer=\"stew6.io.XmlExporter\">"
              + "<dummy />"
              + "</table>";
         try {

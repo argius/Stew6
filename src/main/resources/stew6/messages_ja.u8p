@@ -55,6 +55,6 @@ opt.help=ヘルプを表示
 opt.version=バージョンを表示
 
 help.header=オプション:
-help.footer=より詳しい情報については https://github.com/argius/Stew5/wiki をご覧ください。
+help.footer=より詳しい情報については https://github.com/argius/Stew6/wiki をご覧ください。
 
-usage.message=ヘルプを表示するには、"stew5 --help"を実行してください。
+usage.message=ヘルプを表示するには、"stew6 --help"を実行してください。

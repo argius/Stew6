@@ -21,8 +21,8 @@ public class WindowLauncherTest {
         final String testName = TestUtils.getCurrentMethodString(new Exception());
         final File dir = tmpFolder.newFolder(testName);
         Configuration config = new Configuration();
-        final File f1 = new File(dir, "stew5-config1.xml");
-        final File f2 = new File(dir, "stew5-config2.xml");
+        final File f1 = new File(dir, "stew6-config1.xml");
+        final File f2 = new File(dir, "stew6-config2.xml");
         config.saveTo(f1);
         config.setAlwaysOnTop(true);
         config.setShowInfoTree(true);
@@ -66,7 +66,7 @@ public class WindowLauncherTest {
         final String testName = TestUtils.getCurrentMethodString(new Exception());
         final File dir = tmpFolder.newFolder(testName);
         Configuration config = new Configuration();
-        final File f = new File(dir, "stew5-config.xml");
+        final File f = new File(dir, "stew6-config.xml");
         config.saveTo(f);
         String result = String.join("%n", Files.readAllLines(f.toPath(), StandardCharsets.UTF_8));
         assertThat(result, Matchers.containsString("java.util.HashMap"));
