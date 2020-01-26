@@ -18,6 +18,9 @@ application {
 
 shadowJar {
 	baseName = 'stew'
+	doLast {
+		file("$destinationDir/$archiveName").renameTo("$destinationDir/$baseName-${version}.jar")
+	}
 }
 
 repositories {
