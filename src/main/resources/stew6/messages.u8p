@@ -52,6 +52,7 @@ opt.connect=Connect DB at beginning app
 opt.cui=Start app with CUI mode
 opt.edit=Start "Connector Editor" on CUI
 opt.gui=Start app with CUI mode
+opt.fx=Start app with JavaFX mode (experimental)
 opt.quiet=Keep quiet as possible except displaying results
 opt.help=Show help
 opt.version=Show app version
