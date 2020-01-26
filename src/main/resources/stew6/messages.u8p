@@ -24,7 +24,7 @@ Name: {0}\n\
 Version: {1}
 i.updated=Updated {0} records.
 i.usagePrefix=usage:
-i.usage.syntax=\ stew5 [--cui|--gui] [options] command
+i.usage.syntax=\ stew6 [--cui|--gui] [options] command
 w.auto-commit-not-available=Warning: Auto-commit mode is not available.
 w.connection-closed-abnormally=Warning: Connection was closed abnormally.
 w.error-occurred-on-auto-rollback=Warning: An error occurred when auto-rollback. ({0})
@@ -52,11 +52,12 @@ opt.connect=Connect DB at beginning app
 opt.cui=Start app with CUI mode
 opt.edit=Start "Connector Editor" on CUI
 opt.gui=Start app with CUI mode
+opt.fx=Start app with JavaFX mode (experimental)
 opt.quiet=Keep quiet as possible except displaying results
 opt.help=Show help
 opt.version=Show app version
 
 help.header=Options:
-help.footer=See https://github.com/argius/Stew5/wiki for further information.
+help.footer=See https://github.com/argius/Stew6/wiki for further information.
 
-usage.message=type "stew5 --help" to show help
+usage.message=type "stew6 --help" to show help

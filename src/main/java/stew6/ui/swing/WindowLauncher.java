@@ -746,7 +746,7 @@ public final class WindowLauncher implements
 
     private void showHelp() {
         final String suffix = res.string("key.lang", "en");
-        final String url = "https://github.com/argius/Stew5/wiki/UserGuide_" + suffix;
+        final String url = "https://github.com/argius/Stew6/wiki/UserGuide_" + suffix;
         if (!confirmOk.exam(res.format("i.confirm-jump-to-web", url))) {
             return;
         }

@@ -1,38 +1,42 @@
 
-version = '6.0.0-alpha'
+plugins {
+	id 'java'
+	id 'application'
+	id 'com.github.johnrengelman.shadow' version '5.2.0'
+	id 'eclipse'
+	id 'idea'
+}
 
-buildscript {
-	ext {
-	}
-	repositories {
-		mavenCentral()
-		maven {
-			url 'https://plugins.gradle.org/m2/'
-		}
-	}
-	dependencies {
+version = '6.0.0-beta1'
+
+group = 'argius.stew'
+sourceCompatibility = 1.8
+
+application {
+	mainClassName = 'stew6.App'
+}
+
+shadowJar {
+	baseName = 'stew'
+	doLast {
+		file("$destinationDir/$archiveName").renameTo("$destinationDir/$baseName-${version}.jar")
 	}
 }
 
-apply plugin: 'java'
-apply plugin: 'java-library'
-apply plugin: 'eclipse'
-group = 'argius.stew'
-sourceCompatibility = 1.8
 repositories {
 	mavenCentral()
 }
 
 dependencies {
 	implementation 'org.apache.commons:commons-lang3:3.9'
-    implementation 'commons-io:commons-io:2.6'
-    implementation 'commons-cli:commons-cli:1.4'
-    implementation 'jline:jline:2.14.3'
+	implementation 'commons-io:commons-io:2.6'
+	implementation 'commons-cli:commons-cli:1.4'
+	implementation 'jline:jline:2.14.3'
 	implementation 'org.apache.commons:commons-csv:1.7'
 	implementation 'org.yaml:snakeyaml:1.25'
 	implementation 'net.argius:minestra:1.2.0'
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.hamcrest:hamcrest-junit:2.0.0.0'
-    testImplementation 'com.h2database:h2:1.4.199'
-    testImplementation 'joda-time:joda-time:2.9.9'
+	testImplementation 'junit:junit:4.12'
+	testImplementation 'org.hamcrest:hamcrest-junit:2.0.0.0'
+	testImplementation 'com.h2database:h2:1.4.199'
+	testImplementation 'joda-time:joda-time:2.9.9'
 }
