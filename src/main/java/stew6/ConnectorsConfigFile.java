@@ -18,6 +18,9 @@ final class ConnectorsConfigFile {
         try (InputStream is = Files.newInputStream(getPath())) {
             ConnectorsConfig cfg = yaml.loadAs(is, ConnectorsConfig.class);
             return Optional.ofNullable(cfg).orElseGet(() -> new ConnectorsConfig());
+        } catch (NoSuchFileException e) {
+            Files.createFile(getPath());
+            return new ConnectorsConfig();
         }
     }
 
