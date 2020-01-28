@@ -27,7 +27,7 @@ final class ResultSetTableModel extends DefaultTableModel {
     private final String commandString;
 
     private Connection conn;
-    private Object tableName;
+    private String tableName;
     private String[] primaryKeys;
     private boolean updatable;
     private boolean linkable;

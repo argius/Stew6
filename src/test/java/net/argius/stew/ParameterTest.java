@@ -125,7 +125,7 @@ public final class ParameterTest {
         assertEquals(String.format("Parameter[%s]", S2), p2.toString());
     }
 
-    private String[] a(String s) {
+    private static String[] a(String s) {
         Parameter p = new Parameter(s);
         return p.asArray();
     }

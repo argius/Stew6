@@ -7,8 +7,8 @@ import java.util.*;
  */
 public final class TextUtilities {
 
-    private TextUtilities() {
-    } // forbidden
+    private TextUtilities() { // empty, forbidden
+    }
 
     @Deprecated
     public static String join(String delimiter, Collection<?> a) {

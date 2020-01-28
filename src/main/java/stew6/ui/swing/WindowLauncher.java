@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import javax.swing.text.*;
+import org.apache.commons.lang3.*;
 import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
@@ -771,10 +772,9 @@ public final class WindowLauncher implements
             textArea.replace(commandString);
         }
         op.output("");
-        if (commandString.trim().length() == 0) {
+        if (StringUtils.isBlank(commandString)) {
             doPostProcess();
         } else {
-            final String cmd = commandString;
             final Environment env = this.env;
             final DatabaseInfoTree infoTree = this.infoTree;
             final JLabel statusBar = this.statusBar;
@@ -786,7 +786,7 @@ public final class WindowLauncher implements
                     @SuppressWarnings("resource")
                     Connection conn = env.getCurrentConnection();
                     long time = System.currentTimeMillis();
-                    if (!Commands.invoke(env, cmd)) {
+                    if (!Commands.invoke(env, commandString)) {
                         exit();
                     }
                     if (infoTree.isEnabled()) {
@@ -803,7 +803,7 @@ public final class WindowLauncher implements
                     }
                     if (env.getOutputProcessor() == opref) {
                         time = System.currentTimeMillis() - time;
-                        statusBar.setText(res.format("i.statusbar-message", time / 1000f, cmd));
+                        statusBar.setText(res.format("i.statusbar-message", time / 1000f, commandString));
                         invoker.doLater("doPostProcess");
                     }
                 }
