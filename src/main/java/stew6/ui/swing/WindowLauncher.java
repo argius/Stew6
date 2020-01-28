@@ -38,7 +38,7 @@ public final class WindowLauncher implements
                                   Runnable,
                                   UncaughtExceptionHandler {
 
-    static final ResourceSheaf res = App.res.derive().withClass(WindowLauncher.class).withExtension("u8p").withMessages().withExtension("u8p");
+    static final ResourceSheaf res = App.res.derive().withClass(WindowLauncher.class).withMessages();
     private static final Logger log = Logger.getLogger(WindowLauncher.class);
     private static final String configFileName = "stew.ui.swing.window.config.xml";
 
