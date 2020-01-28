@@ -16,7 +16,6 @@ import java.sql.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.*;
-import java.util.Timer;
 import java.util.concurrent.*;
 import java.util.function.*;
 import javax.swing.*;
@@ -851,20 +850,6 @@ public final class WindowLauncher implements
         log.info("wake up");
     }
 
-    private static final class WakeupTimerTask extends TimerTask {
-        WakeupTimerTask() {
-        } // empty
-        private final AnyAction aa = new AnyAction(this);
-        @Override
-        public void run() {
-            aa.doLater("callWakeup");
-        }
-        @SuppressWarnings("unused")
-        void callWakeup() {
-            wakeup();
-        }
-    }
-
     /**
      * (entry point)
      * @param args
@@ -873,8 +858,8 @@ public final class WindowLauncher implements
         final int residentCycle = App.props.getAsInt("ui.window.resident", 0);
         if (residentCycle > 0) {
             final long msec = residentCycle * 60000L;
-            Timer timer = new Timer(true);
-            timer.scheduleAtFixedRate(new WakeupTimerTask(), msec, msec);
+            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> wakeup(), 0L, msec,
+                                                                             TimeUnit.MILLISECONDS);
         }
         EventQueue.invokeLater(new WindowLauncher());
     }
