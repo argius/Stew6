@@ -12,6 +12,7 @@ import java.io.*;
 import java.lang.Thread.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.apache.commons.lang3.*;
 import minestra.text.*;
 import net.argius.stew.*;
 import stew6.*;
+import stew6.io.*;
 import stew6.ui.*;
 
 /**
@@ -40,7 +42,8 @@ public final class WindowLauncher implements
 
     static final ResourceSheaf res = App.res.derive().withClass(WindowLauncher.class).withMessages();
     private static final Logger log = Logger.getLogger(WindowLauncher.class);
-    private static final String configFileName = "stew.ui.swing.window.config.xml";
+    private static final String oldConfigFileName = "stew.ui.swing.window.config.xml";
+    private static final String configFileName = WindowLauncher.class.getPackage().getName() + ".window.config.yml";
 
     private static final List<WindowLauncher> instances = Collections.synchronizedList(new ArrayList<WindowLauncher>());
 
@@ -168,10 +171,12 @@ public final class WindowLauncher implements
         resultSetTable.addPropertyChangeListener(menu);
         statusBar.addPropertyChangeListener(menu);
         loadConfiguration();
-        op.removePropertyChangeListener(menu);
-        infoTree.removePropertyChangeListener(menu);
-        resultSetTable.removePropertyChangeListener(menu);
-        // statusBar.removePropertyChangeListener(menu);
+        EventQueue.invokeLater(() -> {
+            op.removePropertyChangeListener(menu);
+            infoTree.removePropertyChangeListener(menu);
+            resultSetTable.removePropertyChangeListener(menu);
+            statusBar.removePropertyChangeListener(menu);
+        });
         // [Events]
         ContextMenu.create(infoTree, infoTree);
         ContextMenu.create(resultSetTable);
@@ -410,45 +415,66 @@ public final class WindowLauncher implements
     }
 
     private void loadConfiguration() {
-        Configuration cnf = Configuration.load();
-        op.setSize(cnf.getSize());
-        op.setLocation(cnf.getLocation());
-        split2.setDividerLocation(cnf.getDividerLocation());
-        statusBar.setVisible(cnf.isShowStatusBar());
-        resultSetTable.setShowColumnNumber(cnf.isShowTableColumnNumber());
-        split1.setDividerLocation(cnf.getDividerLocation0());
-        op.setAlwaysOnTop(cnf.isAlwaysOnTop());
-        resultSetTable.setAutoAdjustMode(cnf.getAutoAdjustMode());
-        op.setPostProcessMode(cnf.getPostProcessMode());
-        setInfoTreePaneVisibility(cnf.isShowInfoTree());
+        Configuration cfg;
+        try {
+            WindowConfigurationFile cf = new WindowConfigurationFile();
+            if (!Files.exists(cf.getPath()) && App.getSystemFile(oldConfigFileName).exists()) {
+                // convert to new version
+                cf.write(loadOldVersionConfig());
+            }
+            cfg = cf.read();
+        } catch (IOException e) {
+            log.error(e);
+            return;
+        }
+        op.setSize(cfg.getSize());
+        op.setLocation(cfg.getLocation());
+        split2.setDividerLocation(cfg.getDividerLocation());
+        statusBar.setVisible(cfg.isShowStatusBar());
+        resultSetTable.setShowColumnNumber(cfg.isShowTableColumnNumber());
+        split1.setDividerLocation(cfg.getDividerLocation0());
+        op.setAlwaysOnTop(cfg.isAlwaysOnTop());
+        resultSetTable.setAutoAdjustMode(cfg.getAutoAdjustMode());
+        op.setPostProcessMode(cfg.getPostProcessMode());
+        setInfoTreePaneVisibility(cfg.isShowInfoTree());
         changeFont("monospaced", Font.PLAIN, 1.0d);
     }
 
     private void saveConfiguration() {
-        Configuration cnf = Configuration.load();
-        if ((op.getExtendedState() & Frame.MAXIMIZED_BOTH) == 0) {
-            // only not maximized
-            cnf.setSize(op.getSize());
-            cnf.setLocation(op.getLocation());
-            cnf.setDividerLocation(split2.getDividerLocation());
-            cnf.setDividerLocation0(split1.getDividerLocation());
+        try {
+            WindowConfigurationFile cf = new WindowConfigurationFile();
+            Configuration cfg = cf.read();
+            if ((op.getExtendedState() & Frame.MAXIMIZED_BOTH) == 0) {
+                // only not maximized
+                cfg.setSize(op.getSize());
+                cfg.setLocation(op.getLocation());
+                cfg.setDividerLocation(split2.getDividerLocation());
+                cfg.setDividerLocation0(split1.getDividerLocation());
+            }
+            cfg.setShowStatusBar(statusBar.isVisible());
+            cfg.setShowTableColumnNumber(resultSetTable.isShowColumnNumber());
+            cfg.setShowInfoTree(infoTree.isEnabled());
+            cfg.setAlwaysOnTop(op.isAlwaysOnTop());
+            cfg.setAutoAdjustMode(resultSetTable.getAutoAdjustMode());
+            cfg.setPostProcessMode(op.getPostProcessMode());
+            cf.write(cfg);
+        } catch (IOException e) {
+            log.warn(e);
         }
-        cnf.setShowStatusBar(statusBar.isVisible());
-        cnf.setShowTableColumnNumber(resultSetTable.isShowColumnNumber());
-        cnf.setShowInfoTree(infoTree.isEnabled());
-        cnf.setAlwaysOnTop(op.isAlwaysOnTop());
-        cnf.setAutoAdjustMode(resultSetTable.getAutoAdjustMode());
-        cnf.setPostProcessMode(op.getPostProcessMode());
-        cnf.save();
+    }
+
+    static final class WindowConfigurationFile extends YamlFile<Configuration> {
+
+        public WindowConfigurationFile() {
+            super(Configuration.class, () -> App.getSystemFile(configFileName).toPath());
+        }
+
     }
 
     /**
      * Configuration (Bean) for saving and loading.
      */
-    @SuppressWarnings("all")
     public static final class Configuration {
-
-        private static final Logger log = Logger.getLogger(Configuration.class);
 
         private Dimension size;
         private Point location;
@@ -472,63 +498,6 @@ public final class WindowLauncher implements
             this.alwaysOnTop = false;
             this.autoAdjustMode = AnyActionKey.autoAdjustMode.toString();
             this.postProcessMode = AnyActionKey.postProcessMode.toString();
-        }
-
-        void save() {
-            try {
-                saveTo(App.getSystemFile(configFileName));
-            } catch (Exception ex) {
-                log.warn(ex, "failed to save window configuration");
-            }
-        }
-
-        void saveTo(File file) throws Exception {
-            try (XMLEncoder encoder = new XMLEncoder(new FileOutputStream(file))) {
-                HashMap<String, Object> m = new HashMap<>();
-                BeanInfo beaninfo = Introspector.getBeanInfo(Configuration.class);
-                PropertyDescriptor[] desc = beaninfo.getPropertyDescriptors();
-                for (PropertyDescriptor o : desc) {
-                    String k = o.getName();
-                    Method getter = o.getReadMethod();
-                    try {
-                        m.put(k, getter.invoke(this));
-                    } catch (Exception ex) {
-                        log.warn("%s at saving configuration, key=%s", ex, k);
-                    }
-                }
-                encoder.writeObject(m);
-            }
-        }
-
-        static Configuration load() {
-            try {
-                return loadFrom(App.getSystemFile(configFileName));
-            } catch (Exception ex) {
-                log.warn(ex, "failed to load window configuration");
-                return new Configuration();
-            }
-        }
-
-        static Configuration loadFrom(File file) throws Exception {
-            Configuration config = new Configuration();
-            try (XMLDecoder decoder = new XMLDecoder(new FileInputStream(file))) {
-                HashMap<String, Object> m = (HashMap<String, Object>)decoder.readObject();
-                BeanInfo beaninfo = Introspector.getBeanInfo(Configuration.class);
-                PropertyDescriptor[] desc = beaninfo.getPropertyDescriptors();
-                for (PropertyDescriptor o : desc) {
-                    String k = o.getName();
-                    if (k.equals("class")) {
-                        continue;
-                    }
-                    Method setter = o.getWriteMethod();
-                    try {
-                        setter.invoke(config, m.get(k));
-                    } catch (Exception ex) {
-                        log.warn("%s at loading configuration, key=%s", ex, k);
-                    }
-                }
-            }
-            return config;
         }
 
         public Dimension getSize() {
@@ -611,6 +580,31 @@ public final class WindowLauncher implements
             this.postProcessMode = postProcessMode;
         }
 
+    }
+
+    static Configuration loadOldVersionConfig() {
+        Configuration config = new Configuration();
+        try (XMLDecoder decoder = new XMLDecoder(new FileInputStream(App.getSystemFile(oldConfigFileName)))) {
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> m = (HashMap<String, Object>)decoder.readObject();
+            BeanInfo beaninfo = Introspector.getBeanInfo(Configuration.class);
+            PropertyDescriptor[] desc = beaninfo.getPropertyDescriptors();
+            for (PropertyDescriptor o : desc) {
+                String k = o.getName();
+                if (k.equals("class")) {
+                    continue;
+                }
+                Method setter = o.getWriteMethod();
+                try {
+                    setter.invoke(config, m.get(k));
+                } catch (Exception ex) {
+                    log.warn("%s at loading configuration, key=%s", ex, k);
+                }
+            }
+        } catch (FileNotFoundException | IntrospectionException e) {
+            throw new RuntimeException(e);
+        }
+        return config;
     }
 
     private void changeFont(String family, int style, double sizeRate) {
