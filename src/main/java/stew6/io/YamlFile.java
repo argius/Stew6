@@ -19,7 +19,7 @@ public class YamlFile<T> {
     private Class<? extends T> c;
     private Supplier<? extends Path> pathSupplier;
 
-    public YamlFile(Class<? extends T> c, Supplier<? extends Path> pathSupplier) {
+    protected YamlFile(Class<? extends T> c, Supplier<? extends Path> pathSupplier) {
         this.c = c;
         this.pathSupplier = pathSupplier;
     }
@@ -63,8 +63,8 @@ public class YamlFile<T> {
         op.setDefaultFlowStyle(FlowStyle.BLOCK);
         op.setIndicatorIndent(1);
         op.setIndent(3);
-        Yaml yml = new Yaml(repr, op);
-        out.append(yml.dump(o));
+        Yaml yaml = new Yaml(repr, op);
+        yaml.dump(o, out);
         out.flush();
     }
 
