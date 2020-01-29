@@ -14,7 +14,8 @@ public final class ConfigurationConverter {
      * Converts connectors.properties to connectors.yml if needed.
      */
     public static void convertConnectorsConfigIfNeeded() {
-        final Path newConfigPath = ConnectorsConfigFile.getPath();
+        ConnectorsConfigFile cf = new ConnectorsConfigFile();
+        final Path newConfigPath = cf.getPath();
         final boolean existsNewConfig = Files.exists(newConfigPath);
         if (existsNewConfig) {
             log.info("skip converting: newConfig=(path=%s, exists=%s)", newConfigPath, existsNewConfig);
@@ -38,7 +39,7 @@ public final class ConfigurationConverter {
             ConnectorsConfig cs = new ConnectorsConfig();
             cs.setConnectors(FunctionalUtils.mapAndToList(oldConnectorConfig.values(),
                                                           x -> convertConnectorToConnectorConfig(x)));
-            ConnectorsConfigFile.write(cs);
+            cf.write(cs);
             log.info("converted");
         } catch (IOException e) {
             throw new UncheckedIOException(e);

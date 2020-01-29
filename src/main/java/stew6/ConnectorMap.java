@@ -54,7 +54,7 @@ public final class ConnectorMap extends LinkedHashMap<String, Connector> {
      */
     public static ConnectorMap createFromFile() {
         try {
-            return createFrom(ConnectorsConfigFile.read());
+            return createFrom(new ConnectorsConfigFile().read());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -86,7 +86,7 @@ public final class ConnectorMap extends LinkedHashMap<String, Connector> {
     }
 
     public static boolean existsFile() {
-        return Files.exists(ConnectorsConfigFile.getPath());
+        return Files.exists(new ConnectorsConfigFile().getPath());
     }
 
     public ConnectorsConfig toConnectorConfig() {
@@ -115,7 +115,7 @@ public final class ConnectorMap extends LinkedHashMap<String, Connector> {
 
     public void saveToFile() {
         try {
-            ConnectorsConfigFile.write(toConnectorConfig());
+            new ConnectorsConfigFile().write(toConnectorConfig());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

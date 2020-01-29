@@ -163,11 +163,7 @@ public final class Connector {
             if (StringUtils.isBlank(classpathref)) {
                 classpath = getClasspath();
             } else {
-                try {
-                    classpath = ClasspathrefConfigFile.read().get(classpathref);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
+                classpath = ClasspathrefConfigFile.getClasspath(classpathref);
             }
             driver = ConnectorDriverManager.getDriver(getUrl(), getDriver(), classpath);
             if (driver == null) {
