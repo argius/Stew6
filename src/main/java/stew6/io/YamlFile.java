@@ -35,7 +35,10 @@ public class YamlFile<T> {
     public static <T> T read(Class<T> c, Supplier<? extends Path> pathSupplier) throws IOException {
         try (InputStream is = Files.newInputStream(pathSupplier.get())) {
             Yaml yaml = new Yaml();
-            return yaml.loadAs(is, c);
+            T o = yaml.loadAs(is, c);
+            if (o != null) {
+                return o;
+            }
         } catch (NoSuchFileException e) {
             Files.createFile(pathSupplier.get());
         }
