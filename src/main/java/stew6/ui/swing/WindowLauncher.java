@@ -171,7 +171,6 @@ public final class WindowLauncher implements
         op.removePropertyChangeListener(menu);
         infoTree.removePropertyChangeListener(menu);
         resultSetTable.removePropertyChangeListener(menu);
-        // XXX cannot restore config of status-bar at following code
         // statusBar.removePropertyChangeListener(menu);
         // [Events]
         ContextMenu.create(infoTree, infoTree);
