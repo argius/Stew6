@@ -562,6 +562,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                     target = getPathForRow(i);
                 } catch (IndexOutOfBoundsException ex) {
                     // FIXME when IndexOutOfBoundsException was thrown at expandNodes
+                    assert false : "FIXME: when IndexOutOfBoundsException was thrown at expandNodes, Exception=" + ex;
                     log.warn(ex);
                     break;
                 }
