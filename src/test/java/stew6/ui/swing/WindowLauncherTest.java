@@ -9,6 +9,7 @@ import org.hamcrest.*;
 import org.junit.*;
 import org.junit.rules.*;
 import stew6.*;
+import stew6.io.*;
 import stew6.ui.swing.WindowLauncher.*;
 
 public class WindowLauncherTest {
@@ -21,9 +22,11 @@ public class WindowLauncherTest {
         final String testName = TestUtils.getCurrentMethodString(new Exception());
         final File dir = tmpFolder.newFolder(testName);
         Configuration config = new Configuration();
-        final File f1 = new File(dir, "stew6-config1.xml");
-        final File f2 = new File(dir, "stew6-config2.xml");
-        config.saveTo(f1);
+        final File f1 = new File(dir, "stew6-config1.yml");
+        final File f2 = new File(dir, "stew6-config2.yml");
+        try (Writer out = Files.newBufferedWriter(f1.toPath())) {
+            YamlFile.writeTo(out, config);
+        }
         config.setAlwaysOnTop(true);
         config.setShowInfoTree(true);
         config.setShowStatusBar(true);
@@ -34,8 +37,10 @@ public class WindowLauncherTest {
         config.setPostProcessMode("post-process");
         config.setLocation(new Point(123, 456));
         config.setSize(new Dimension(1182, 968));
-        config.saveTo(f2);
-        Configuration loaded1 = Configuration.loadFrom(f1);
+        try (Writer out = Files.newBufferedWriter(f2.toPath())) {
+            YamlFile.writeTo(out, config);
+        }
+        Configuration loaded1 = YamlFile.read(Configuration.class, f1::toPath);
         assertEquals(new Point(200, 200), loaded1.getLocation());
         assertEquals(-1, loaded1.getDividerLocation());
         assertFalse(loaded1.isAlwaysOnTop());
@@ -48,7 +53,7 @@ public class WindowLauncherTest {
         assertEquals("postProcessMode", loaded1.getPostProcessMode());
         assertEquals(new Point(200, 200), loaded1.getLocation());
         assertEquals(new Dimension(640, 480), loaded1.getSize());
-        Configuration loaded2 = Configuration.loadFrom(f2);
+        Configuration loaded2 = YamlFile.read(Configuration.class, f2::toPath);
         assertTrue(loaded2.isAlwaysOnTop());
         assertTrue(loaded2.isShowInfoTree());
         assertTrue(loaded2.isShowStatusBar());
@@ -67,9 +72,10 @@ public class WindowLauncherTest {
         final File dir = tmpFolder.newFolder(testName);
         Configuration config = new Configuration();
         final File f = new File(dir, "stew6-config.xml");
-        config.saveTo(f);
+        try (Writer out = Files.newBufferedWriter(f.toPath())) {
+            YamlFile.writeTo(out, config);
+        }
         String result = String.join("%n", Files.readAllLines(f.toPath(), StandardCharsets.UTF_8));
-        assertThat(result, Matchers.containsString("java.util.HashMap"));
         assertThat(result, Matchers.containsString("showInfoTree"));
         assertThat(result, Matchers.containsString("location"));
         assertThat(result, Matchers.containsString("dividerLocation"));

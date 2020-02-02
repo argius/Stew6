@@ -1,7 +1,6 @@
 package stew6.ui.swing;
 
 import static java.sql.Types.*;
-import static java.util.Collections.nCopies;
 import java.sql.*;
 import java.util.*;
 import java.util.Map.*;
@@ -10,6 +9,7 @@ import java.util.regex.*;
 import java.util.stream.*;
 import javax.swing.table.*;
 import stew6.*;
+import stew6.sql.*;
 
 /**
  * The TableModel for ResultSetTable.
@@ -27,7 +27,7 @@ final class ResultSetTableModel extends DefaultTableModel {
     private final String commandString;
 
     private Connection conn;
-    private Object tableName;
+    private String tableName;
     private String[] primaryKeys;
     private boolean updatable;
     private boolean linkable;
@@ -315,27 +315,30 @@ final class ResultSetTableModel extends DefaultTableModel {
         return commandString;
     }
 
+    private static List<Clause> convertToClauses(String... columnNames) {
+        return Stream.of(columnNames).map(x -> Clause.implicit(Column.of(x))).collect(Collectors.toList());
+    }
+
     private void executeUpdate(Map<Object, Object> keyMap, Object targetKey, Object targetValue) throws SQLException {
-        final String sql = String.format("UPDATE %s SET %s=? WHERE %s", tableName, quoteIfNeeds(targetKey),
-                                         toKeyPhrase(primaryKeys));
+        Table table = Table.of(tableName);
+        final String sql = Update.sql(table, convertToClauses(targetKey.toString()), convertToClauses(primaryKeys));
         executeSql(sql, Stream.concat(Stream.of(targetValue), Stream.of(primaryKeys).map(keyMap::get)).toArray());
     }
 
     private void executeInsert(Map<Object, Object> rowData) throws SQLException {
         final int dataSize = rowData.size();
-        List<String> keys = new ArrayList<>(dataSize);
+        List<Column> columns = new ArrayList<>(dataSize);
         List<Object> values = new ArrayList<>(dataSize);
         for (Entry<?, ?> entry : rowData.entrySet()) {
-            keys.add(quoteIfNeeds(String.valueOf(entry.getKey())));
+            columns.add(Column.of((String)entry.getKey()));
             values.add(entry.getValue());
         }
-        final String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, String.join(",", keys),
-                                         String.join(",", nCopies(dataSize, "?")));
+        final String sql = Insert.sql(Table.of(tableName), columns);
         executeSql(sql, values.toArray());
     }
 
     private void executeDelete(Map<Object, Object> keyMap) throws SQLException {
-        final String sql = String.format("DELETE FROM %s WHERE %s", tableName, toKeyPhrase(primaryKeys));
+        final String sql = Delete.sql(Table.of(tableName), convertToClauses(primaryKeys));
         executeSql(sql, Stream.of(primaryKeys).map(keyMap::get).toArray());
     }
 
@@ -420,18 +423,6 @@ final class ResultSetTableModel extends DefaultTableModel {
             }
             throw new SQLException(errors.get(0));
         }
-    }
-
-    private static String toKeyPhrase(Object[] keys) {
-        return Stream.of(keys).map(x -> x + "=?").collect(Collectors.joining(" AND "));
-    }
-
-    private static String quoteIfNeeds(Object o) {
-        final String s = String.valueOf(o);
-        if (s.matches(".*\\W.*")) {
-            return String.format("\"%s\"", s);
-        }
-        return s;
     }
 
     @SuppressWarnings("resource")

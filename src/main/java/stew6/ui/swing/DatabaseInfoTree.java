@@ -17,12 +17,12 @@ import java.text.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map.*;
-import java.util.stream.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import minestra.text.*;
 import stew6.*;
+import stew6.sql.*;
 
 /**
  * The Database Information Tree is a tree pane that provides to
@@ -122,7 +122,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         } else if (ev.isAnyOf(generateSelectPhrase)) {
             final String phrase = generateSelectPhrase(getSelectionNodes());
             if (phrase.length() > 0) {
-                insertTextIntoTextArea(phrase + " WHERE ");
+                insertTextIntoTextArea(phrase);
             }
         } else if (ev.isAnyOf(generateUpdateStatement, generateInsertStatement)) {
             final boolean isInsert = ev.isAnyOf(generateInsertStatement);
@@ -132,7 +132,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                     if (isInsert) {
                         insertTextIntoTextArea(addCommas(phrase));
                     } else {
-                        insertTextIntoTextArea(phrase + " WHERE ");
+                        insertTextIntoTextArea(phrase);
                     }
                 }
             } catch (IllegalArgumentException ex) {
@@ -250,38 +250,17 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         if (nodes.isEmpty()) {
             return "";
         }
-        Set<String> tableNames = new LinkedHashSet<>();
-        ListMap columnMap = new ListMap();
+        List<Column> columns = new ArrayList<>();
+        List<Clause> clauses = new ArrayList<>();
         for (ColumnNode node : nodes) {
             final String tableName = node.getTableNode().getNodeFullName();
             final String columnName = node.getName();
-            tableNames.add(tableName);
-            columnMap.add(columnName, String.format("%s.%s", tableName, columnName));
+            Column c = Column.of(columnName, Table.of(tableName));
+            columns.add(c);
+            clauses.add(Clause.implicit(c));
         }
-        assert tableNames.size() >= 1;
-        List<String> expressions = new ArrayList<>();
-        if (tableNames.size() == 1) {
-            for (ColumnNode node : nodes) {
-                expressions.add(String.format("%s=?", node.getName()));
-            }
-        } else { // size >= 2
-            List<String> expressions2 = new ArrayList<>();
-            for (Entry<String, List<String>> entry : columnMap.entrySet()) {
-                List<String> a = entry.getValue();
-                final int n = a.size();
-                assert n >= 1;
-                expressions2.add(String.format("%s=?", a.get(0)));
-                if (n >= 2) {
-                    for (int i = 0; i < n; i++) {
-                        for (int j = i + 1; j < n; j++) {
-                            expressions.add(String.format("%s=%s", a.get(i), a.get(j)));
-                        }
-                    }
-                }
-            }
-            expressions.addAll(expressions2);
-        }
-        return String.format("%s", String.join(" AND ", expressions));
+        String sql = Where.sql(columns, clauses);
+        return sql.length() >= 6 ? sql.substring(6) : sql;
     }
 
     static String generateSelectPhrase(List<TreeNode> nodes) {
@@ -296,37 +275,23 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                 ColumnNode cn = (ColumnNode)node;
                 final String tableFullName = cn.getTableNode().getNodeFullName();
                 tableNames.add(tableFullName);
-                columnMap.add(tableFullName, cn.getNodeFullName());
+                columnMap.add(tableFullName, cn.getName());
             }
         }
         if (tableNames.isEmpty()) {
             return "";
         }
-        List<String> columnNames = new ArrayList<>();
-        if (tableNames.size() == 1) {
-            List<String> a = new ArrayList<>();
-            for (TreeNode node : nodes) {
-                if (node instanceof ColumnNode) {
-                    ColumnNode cn = (ColumnNode)node;
-                    a.add(cn.getName());
-                }
-            }
-            if (a.isEmpty()) {
-                columnNames.add("*");
+        List<Column> columns = new ArrayList<>();
+        for (Entry<String, List<String>> entry : columnMap.entrySet()) {
+            final List<String> columnsInTable = entry.getValue();
+            Table table = Table.of(entry.getKey());
+            if (columnsInTable.isEmpty()) {
+                columns.add(Column.allOf(table));
             } else {
-                columnNames.addAll(a);
-            }
-        } else { // size >= 2
-            for (Entry<String, List<String>> entry : columnMap.entrySet()) {
-                final List<String> columnsInTable = entry.getValue();
-                if (columnsInTable.isEmpty()) {
-                    columnNames.add(entry.getKey() + ".*");
-                } else {
-                    columnNames.addAll(columnsInTable);
-                }
+                columns.addAll(FunctionalUtils.mapAndToList(columnsInTable, x -> Column.of(x, table)));
             }
         }
-        return String.format("SELECT %s FROM %s", String.join(", ", columnNames), String.join(", ", tableNames));
+        return Select.sql(columns, emptyList()) + " " + Keyword.WHERE.toSql() + " ";
     }
 
     static String generateUpdateOrInsertPhrase(List<TreeNode> nodes, boolean isInsert) {
@@ -350,7 +315,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         if (tableNames.size() >= 2) {
             throw new IllegalArgumentException(res.s("e.enables-select-just-1-table"));
         }
-        final String tableName = String.join("", tableNames);
+        String tableName = new LinkedList<>(tableNames).poll();
         List<String> columnsInTable = columnMap.get(tableName);
         if (columnsInTable.isEmpty()) {
             if (isInsert) {
@@ -373,16 +338,21 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                 return "";
             }
         }
-        final String phrase;
+        return getSqlPhrase(tableName, columnsInTable, isInsert);
+    }
+
+    private static String getSqlPhrase(String tableName, List<String> columnNames, boolean isInsert) {
+        Table table = Table.of(tableName);
         if (isInsert) {
-            final int columnCount = columnsInTable.size();
-            phrase = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, String.join(",", columnsInTable),
-                                   String.join(",", nCopies(columnCount, "?")));
+            List<Column> columns = FunctionalUtils.mapAndToList(columnNames, x -> Column.of(x, table));
+            return Insert.sql(table, columns);
         } else {
-            phrase = String.format("UPDATE %s SET %s", tableName,
-                                   columnsInTable.stream().map(x -> x + "=?").collect(Collectors.joining(", ")));
+            List<Clause> clauses = FunctionalUtils.mapAndToList(columnNames, x -> Clause.implicit(Column.of(x)));
+            if (clauses.isEmpty()) {
+                return "";
+            }
+            return Update.sql(table, clauses, Collections.emptyList()) + " " + Keyword.WHERE.toSql() + " ";
         }
-        return phrase;
     }
 
     void showLimitedRecords() throws SQLException {
@@ -562,6 +532,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
                     target = getPathForRow(i);
                 } catch (IndexOutOfBoundsException ex) {
                     // FIXME when IndexOutOfBoundsException was thrown at expandNodes
+                    assert false : "FIXME: when IndexOutOfBoundsException was thrown at expandNodes, Exception=" + ex;
                     log.warn(ex);
                     break;
                 }

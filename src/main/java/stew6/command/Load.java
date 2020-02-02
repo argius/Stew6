@@ -3,10 +3,10 @@ package stew6.command;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
-import org.apache.commons.lang3.*;
 import net.argius.stew.*;
 import stew6.*;
 import stew6.io.*;
+import stew6.sql.*;
 
 /**
  * The Load command is used to execute SQL from a file.
@@ -76,20 +76,32 @@ public class Load extends Command {
                               boolean hasHeader) throws IOException, SQLException {
         try (Importer importer = Importer.getImporter(file)) {
             final Object[] header;
+            final int columnCount;
             if (hasHeader) {
                 header = importer.getHeader();
+                columnCount = importer.getHeader().length;
             } else {
+                header = new Object[0];
                 try (Importer importer2 = Importer.getImporter(file)) {
-                    Object[] a = importer2.nextRow();
-                    Arrays.fill(a, "");
-                    header = a;
+                    int c = 0;
+                    while (true) {
+                        Object[] a = importer2.nextRow();
+                        if (a.length == 0) {
+                            break;
+                        }
+                        c = Math.max(c, a.length);
+                    }
+                    columnCount = c;
                 }
             }
-            final List<Object> headerList = Arrays.asList(header);
-            final String columns = (hasHeader) ? String.format("(%s)", StringUtils.join(headerList, ',')) : "";
-            final List<Object> valueList = new ArrayList<>(headerList);
-            Collections.fill(valueList, "?");
-            final String sql = String.format("INSERT INTO %s %s VALUES (%s)", tableName, columns, StringUtils.join(valueList, ','));
+            Table table = Table.of(tableName);
+            final String sql;
+            if (header.length == 0) {
+                sql = Insert.sql(table, columnCount);
+            } else {
+                sql = Insert.sql(table, FunctionalUtils.mapAndToList(Arrays.asList(header),
+                                                                     x -> Column.of(String.valueOf(x))));
+            }
             if (log.isDebugEnabled()) {
                 log.debug("SQL : " + sql);
             }

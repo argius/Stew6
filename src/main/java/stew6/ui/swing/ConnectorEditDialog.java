@@ -305,7 +305,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
     void chooseClasspathref() {
         ClasspathrefConfig cfg;
         try {
-            cfg = ClasspathrefConfigFile.read();
+            cfg = new ClasspathrefConfigFile().read();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -348,13 +348,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
                 }
                 classpathString = System.getProperty("java.class.path");
             } else {
-                ClasspathrefConfig cfg;
-                try {
-                    cfg = ClasspathrefConfigFile.read();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-                classpathString = cfg.get(classpathrefString);
+                classpathString = ClasspathrefConfigFile.getClasspath(classpathrefString);
             }
         } else {
             classpathString = classpathText;

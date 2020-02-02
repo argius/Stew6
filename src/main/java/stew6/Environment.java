@@ -191,7 +191,8 @@ public final class Environment {
      * Loads and refreshes connector map.
      */
     public void loadConnectorMap() {
-        if (!Files.exists(ConnectorsConfigFile.getPath())) {
+        ConnectorsConfigFile cf = new ConnectorsConfigFile();
+        if (!Files.exists(cf.getPath())) {
             ConfigurationConverter.convertConnectorsConfigIfNeeded();
         }
         ConnectorMap m;
@@ -205,7 +206,7 @@ public final class Environment {
                 connectorMap.clear();
             }
             connectorMap.putAll(m);
-            connectorTimestamp = ConnectorsConfigFile.getLastModified();
+            connectorTimestamp = cf.getLastModified();
         }
     }
 
@@ -215,7 +216,7 @@ public final class Environment {
      * @return whether updated or not
      */
     public boolean updateConnectorMap() {
-        if (ConnectorsConfigFile.getLastModified() > connectorTimestamp) {
+        if (new ConnectorsConfigFile().getLastModified() > connectorTimestamp) {
             loadConnectorMap();
             return true;
         }

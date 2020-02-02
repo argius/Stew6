@@ -25,7 +25,7 @@ import stew6.ui.*;
 public final class FxLauncher extends Application implements Launcher, OutputProcessor {
 
     static final Class<FxLauncher> CLASS = FxLauncher.class;
-    static final ResourceSheaf res = App.res.derive().withClass(CLASS).withMessages().withExtension("u8p");
+    static final ResourceSheaf res = App.res.derive().withClass(CLASS).withMessages();
 
     private Environment env;
     private TableView<Map<String, Object>> resultTable;
