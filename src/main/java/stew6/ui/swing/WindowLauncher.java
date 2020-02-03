@@ -12,6 +12,7 @@ import java.io.*;
 import java.lang.Thread.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.nio.charset.*;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
@@ -584,7 +585,17 @@ public final class WindowLauncher implements
 
     static Configuration loadOldVersionConfig() {
         Configuration config = new Configuration();
-        try (XMLDecoder decoder = new XMLDecoder(new FileInputStream(App.getSystemFile(oldConfigFileName)))) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            // workaround
+            String cn6 = config.getClass().getName();
+            String cn5 = cn6.replaceFirst("(....)6", "$15");
+            List<String> lines = Files.readAllLines(App.getSystemFile(oldConfigFileName).toPath(), StandardCharsets.UTF_8);
+            bos.write(String.join("", lines).replace(cn5, cn6).getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        try (XMLDecoder decoder = new XMLDecoder(new ByteArrayInputStream(bos.toByteArray()))) {
             @SuppressWarnings("unchecked")
             HashMap<String, Object> m = (HashMap<String, Object>)decoder.readObject();
             BeanInfo beaninfo = Introspector.getBeanInfo(Configuration.class);
@@ -601,7 +612,7 @@ public final class WindowLauncher implements
                     log.warn("%s at loading configuration, key=%s", ex, k);
                 }
             }
-        } catch (FileNotFoundException | IntrospectionException e) {
+        } catch (IntrospectionException e) {
             throw new RuntimeException(e);
         }
         return config;
