@@ -142,7 +142,7 @@ final class ConnectorEditDialog extends JDialog implements AnyActionListener {
     protected void processWindowEvent(WindowEvent e) {
         super.processWindowEvent(e);
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            anyActionPerformed(new AnyActionEvent(this, cancel));
+            anyActionPerformed(this, cancel);
         }
     }
 

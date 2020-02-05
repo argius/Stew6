@@ -105,7 +105,7 @@ final class ConsoleTextArea extends JTextArea implements AnyActionListener, Text
         if (ev.isAnyOf(submit)) {
             final int ep = getEndPosition();
             if (getCaretPosition() == ep) {
-                anyActionListener.anyActionPerformed(new AnyActionEvent(this, execute));
+                anyActionListener.anyActionPerformed(this, execute);
             } else {
                 setCaretPosition(ep);
             }

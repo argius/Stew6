@@ -8,4 +8,8 @@ interface AnyActionListener {
 
     void anyActionPerformed(AnyActionEvent ev);
 
+    default void anyActionPerformed(Object source, Object actionKey, Object... args) {
+        anyActionPerformed(new AnyActionEvent(source, actionKey, args));
+    }
+
 }

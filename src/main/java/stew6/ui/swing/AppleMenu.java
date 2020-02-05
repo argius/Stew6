@@ -79,7 +79,7 @@ final class AppleMenu {
             WindowLauncher.exit();
         }
         public void showAbout(Object srcComponent) {
-            anyActionListener.anyActionPerformed(new AnyActionEvent(srcComponent, Menu.Item.showAbout));
+            anyActionListener.anyActionPerformed(srcComponent, Menu.Item.showAbout);
         }
         public void setupDockerIcon() throws Exception {
             Class<?> c = Class.forName("com.apple.eawt.Application");
