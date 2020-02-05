@@ -48,9 +48,9 @@ public final class WindowLauncher implements
 
     private static final List<WindowLauncher> instances = Collections.synchronizedList(new ArrayList<WindowLauncher>());
 
-    private final BiConsumer<String, Integer> showMessage = (x, y) -> showMessageDialog(focused(), x, null, y);
-    private final Pred<String> confirmYes = x -> showConfirmDialog(focused(), x, "", YES_NO_OPTION) == YES_OPTION;
-    private final Pred<Object> confirmOk = x -> showConfirmDialog(focused(), x, "", OK_CANCEL_OPTION) == OK_OPTION;
+    private final BiConsumer<String, Integer> showMessage = (x, y) -> showMessageDialog(parent(), x, null, y);
+    private final Pred<String> confirmYes = x -> showConfirmDialog(parent(), x, "", YES_NO_OPTION) == YES_OPTION;
+    private final Pred<Object> confirmOk = x -> showConfirmDialog(parent(), x, "", OK_CANCEL_OPTION) == OK_OPTION;
     private final WindowOutputProcessor op;
     private final Menu menu;
     private final JPanel panel1;
@@ -316,7 +316,7 @@ public final class WindowLauncher implements
                 retrieveHistory(+1);
             } else if (ev.isAnyOf(showAllHistories)) {
                 if (historyList.isEmpty()) {
-                    WindowOutputProcessor.showWideMessageDialog(focused(), res.s("w.no-histories"));
+                    WindowOutputProcessor.showWideMessageDialog(parent(), res.s("w.no-histories"));
                 } else {
                     final String msg = res.format("i.choose-history", historyList.size());
                     final String lastCommand = historyList.get(historyList.size() - 1);
@@ -411,8 +411,8 @@ public final class WindowLauncher implements
         SwingUtilities.updateComponentTreeUI(op);
     }
 
-    private Component focused() {
-        return focused == null ? op : focused;
+    private Component parent() {
+        return op;
     }
 
     private void loadConfiguration() {
