@@ -1,7 +1,9 @@
 package stew6.ui.fx;
 
+import java.io.*;
 import java.sql.*;
 import java.util.*;
+import java.util.function.*;
 import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.beans.value.*;
@@ -9,6 +11,7 @@ import javafx.collections.*;
 import javafx.event.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.scene.control.TableColumn.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
@@ -27,28 +30,98 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
     static final Class<FxLauncher> CLASS = FxLauncher.class;
     static final ResourceSheaf res = App.res.derive().withClass(CLASS).withMessages();
 
+    private static final Logger log = Logger.getLogger(FxLauncher.class);
+
     private Environment env;
+    private Stage stage;
     private TableView<Map<String, Object>> resultTable;
     private TextArea textArea;
     private int promptPosition;
 
     @Override
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
+        this.resultTable = new TableView<>();
+        this.textArea = buildOutputArea();
         stage.setTitle(res.s(".title"));
-        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent e) {
-                close();
-            }
-        });
+        stage.setOnCloseRequest(e -> requestClose());
         BorderPane pane = new BorderPane();
-        pane.setCenter(this.resultTable = new TableView<>());
-        pane.setBottom(this.textArea = buildOutputArea());
-        stage.setScene(new Scene(pane, 600, 400));
+        pane.setCenter(resultTable);
+        pane.setBottom(textArea);
+        Scene scene = createScene(pane);
+        scene.setOnKeyPressed(this::handleKeyEvent);
+        stage.setScene(scene);
         stage.show();
         this.textArea.setFont(Font.font("Monospaced"));
         launchWith(this);
+    }
 
+    Scene createScene(Parent root) {
+        Supplier<FxWindowConfig> loader = () -> {
+            try {
+                FxWindowConfigFile f = new FxWindowConfigFile();
+                return f.read();
+            } catch (IOException e) {
+                log.error(e);
+            }
+            return new FxWindowConfig();
+        };
+        FxWindowConfig cfg = loader.get();
+        try {
+            FxWindowConfigFile f = new FxWindowConfigFile();
+            cfg = f.read();
+        } catch (IOException e) {
+            log.error(e);
+        }
+        if (cfg.getX() <= 0) {
+            cfg.setX(100);
+        }
+        if (cfg.getY() <= 0) {
+            cfg.setY(100);
+        }
+        if (cfg.getWidth() <= 0) {
+            cfg.setWidth(600);
+        }
+        if (cfg.getHeight() <= 0) {
+            cfg.setHeight(400);
+        }
+        Scene scene = new Scene(root, cfg.getWidth(), cfg.getHeight());
+        return scene;
+    }
+
+    void saveWindowConfig() {
+        FxWindowConfig cfg = loadWindowConfig();
+        cfg.setX((int)stage.getX());
+        cfg.setY((int)stage.getY());
+        cfg.setWidth((int)stage.getWidth());
+        cfg.setHeight((int)stage.getHeight());
+        FxWindowConfigFile f = new FxWindowConfigFile();
+        try {
+            f.write(cfg);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    static FxWindowConfig loadWindowConfig() {
+        try {
+            FxWindowConfigFile f = new FxWindowConfigFile();
+            return f.read();
+        } catch (IOException e) {
+            log.error(e);
+        }
+        return new FxWindowConfig();
+    }
+
+    void handleKeyEvent(KeyEvent e) {
+        switch (e.getCode()) {
+            case W:
+                if (e.isShortcutDown()) {
+                    requestClose();
+                }
+                break;
+            default:
+        }
     }
 
     private TextArea buildOutputArea() {
@@ -83,15 +156,11 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
     }
 
     private void sendCommand(final String cmd) {
-        Platform.runLater(new Runnable() {
-            @SuppressWarnings("synthetic-access")
-            @Override
-            public void run() {
-                if (!Commands.invoke(env, cmd)) {
-                    close();
-                }
-                outputPrompt();
+        Platform.runLater(() -> {
+            if (!Commands.invoke(env, cmd)) {
+                close();
             }
+            outputPrompt();
         });
     }
 
@@ -177,10 +246,22 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
         textArea.appendText(String.format(format, a));
     }
 
+    void requestClose() {
+        Alert dialog = new Alert(AlertType.CONFIRMATION);
+        dialog.setHeaderText("");
+        dialog.setContentText(res.s("i.confirm-close"));
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                Platform.runLater(this::close);
+            }
+        });
+    }
+
     @Override
     public void close() {
         env.release();
-        Platform.exit();
+        saveWindowConfig();
+        stage.close();
     }
 
     public static void main(String[] args) {
