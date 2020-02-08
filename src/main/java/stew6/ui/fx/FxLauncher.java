@@ -46,13 +46,9 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
         pane.setBottom(this.textArea = buildOutputArea());
         stage.setScene(new Scene(pane, 600, 400));
         stage.show();
-
-        // Font
         this.textArea.setFont(Font.font("Monospaced"));
+        launchWith(this);
 
-        Environment env = new Environment();
-        env.setOutputProcessor(this);
-        launch(env);
     }
 
     private TextArea buildOutputArea() {

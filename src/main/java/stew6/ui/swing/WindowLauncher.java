@@ -637,9 +637,7 @@ public final class WindowLauncher implements
     }
 
     static void invoke(WindowLauncher instance) {
-        final Environment env = new Environment();
-        env.setOutputProcessor(new WindowOutputProcessor.Bypass(instance.op));
-        instance.launch(env);
+        instance.launchWith(new WindowOutputProcessor.Bypass(instance.op));
     }
 
     /**
