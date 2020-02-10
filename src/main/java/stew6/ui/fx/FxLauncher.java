@@ -8,14 +8,12 @@ import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.beans.value.*;
 import javafx.collections.*;
-import javafx.event.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.control.TableColumn.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.*;
 import javafx.stage.*;
 import javafx.util.*;
 import minestra.text.*;
@@ -35,14 +33,13 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
     private Environment env;
     private Stage stage;
     private TableView<Map<String, Object>> resultTable;
-    private TextArea textArea;
-    private int promptPosition;
+    private FxConsoleTextArea textArea;
 
     @Override
     public void start(Stage stage) throws Exception {
         this.stage = stage;
         this.resultTable = new TableView<>();
-        this.textArea = buildOutputArea();
+        this.textArea = new FxConsoleTextArea(this);
         stage.setTitle(res.s(".title"));
         stage.setOnCloseRequest(e -> requestClose());
         BorderPane pane = new BorderPane();
@@ -52,7 +49,7 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
         scene.setOnKeyPressed(this::handleKeyEvent);
         stage.setScene(scene);
         stage.show();
-        this.textArea.setFont(Font.font("Monospaced"));
+        textArea.requestFocus();
         launchWith(this);
     }
 
@@ -124,44 +121,28 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
         }
     }
 
-    private TextArea buildOutputArea() {
-        final TextArea o = new TextArea();
-        o.setStyle(res.s("style"));
-        o.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent e) {
-                switch (e.getCode()) {
-                    case ENTER:
-                        onSubmit();
-                        break;
-                    case C:
-                        if (e.isControlDown()) {
-                            o.appendText(" [BREAK] ");
-                            outputPrompt();
-                        }
-                        break;
-                    default:
+    void sendCommand(String cmd) {
+        try {
+            Platform.runLater(() -> {
+                setDisable(true);
+            });
+            Platform.runLater(() -> {
+                if (!Commands.invoke(env, cmd)) {
+                    close();
                 }
-            }
-            @SuppressWarnings("synthetic-access")
-            private void onSubmit() {
-                o.end();
-                final int endp = o.getCaretPosition();
-                if (endp >= promptPosition) {
-                    sendCommand(o.getText(promptPosition, endp));
-                }
-            }
-        });
-        return o;
+                outputPrompt();
+            });
+        } finally {
+            Platform.runLater(() -> {
+                setDisable(false);
+                textArea.requestFocus();
+            });
+        }
     }
 
-    private void sendCommand(final String cmd) {
-        Platform.runLater(() -> {
-            if (!Commands.invoke(env, cmd)) {
-                close();
-            }
-            outputPrompt();
-        });
+    void setDisable(boolean value) {
+        resultTable.setDisable(value);
+        textArea.setDisable(value);
     }
 
     @Override
@@ -183,15 +164,18 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
                 throw new RuntimeException(ex);
             }
         } else if (o instanceof Prompt) {
-            outputPrompt();
+            textArea.outputPrompt();
         } else {
-            outputLine(o);
+            textArea.outputLine(o);
         }
     }
 
     void outputPrompt() {
-        printf("%s", new Prompt(env));
-        promptPosition = textArea.getCaretPosition();
+        textArea.outputPrompt();
+    }
+
+    Prompt getPrompt() {
+        return new Prompt(env);
     }
 
     private void outputResult(ResultSetReference ref) throws SQLException {
@@ -230,20 +214,6 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
         }
         resultTable.setItems(data);
         ref.setRecordCount(rowCount);
-    }
-
-    private void outputLine(Object... a) {
-        if (a.length == 0) {
-            printf("%n");
-        } else {
-            for (final Object o : a) {
-                printf("%s%n", o);
-            }
-        }
-    }
-
-    private void printf(String format, Object... a) {
-        textArea.appendText(String.format(format, a));
     }
 
     void requestClose() {
