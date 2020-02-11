@@ -1,18 +1,19 @@
 package stew6.ui.fx;
 
+import java.io.*;
 import java.sql.*;
 import java.util.*;
+import java.util.function.*;
 import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.beans.value.*;
 import javafx.collections.*;
-import javafx.event.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.scene.control.TableColumn.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.*;
 import javafx.stage.*;
 import javafx.util.*;
 import minestra.text.*;
@@ -27,76 +28,121 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
     static final Class<FxLauncher> CLASS = FxLauncher.class;
     static final ResourceSheaf res = App.res.derive().withClass(CLASS).withMessages();
 
+    private static final Logger log = Logger.getLogger(FxLauncher.class);
+
     private Environment env;
+    private Stage stage;
     private TableView<Map<String, Object>> resultTable;
-    private TextArea textArea;
-    private int promptPosition;
+    private FxConsoleTextArea textArea;
 
     @Override
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
+        this.resultTable = new TableView<>();
+        this.textArea = new FxConsoleTextArea(this);
         stage.setTitle(res.s(".title"));
-        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent e) {
-                close();
-            }
-        });
+        stage.setOnCloseRequest(e -> requestClose());
         BorderPane pane = new BorderPane();
-        pane.setCenter(this.resultTable = new TableView<>());
-        pane.setBottom(this.textArea = buildOutputArea());
-        stage.setScene(new Scene(pane, 600, 400));
+        pane.setCenter(resultTable);
+        pane.setBottom(textArea);
+        Scene scene = createScene(pane);
+        scene.setOnKeyPressed(this::handleKeyEvent);
+        stage.setScene(scene);
         stage.show();
-
-        // Font
-        this.textArea.setFont(Font.font("Monospaced"));
-
-        Environment env = new Environment();
-        env.setOutputProcessor(this);
-        launch(env);
+        textArea.requestFocus();
+        launchWith(this);
     }
 
-    private TextArea buildOutputArea() {
-        final TextArea o = new TextArea();
-        o.setStyle(res.s("style"));
-        o.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent e) {
-                switch (e.getCode()) {
-                    case ENTER:
-                        onSubmit();
-                        break;
-                    case C:
-                        if (e.isControlDown()) {
-                            o.appendText(" [BREAK] ");
-                            outputPrompt();
-                        }
-                        break;
-                    default:
-                }
+    Scene createScene(Parent root) {
+        Supplier<FxWindowConfig> loader = () -> {
+            try {
+                FxWindowConfigFile f = new FxWindowConfigFile();
+                return f.read();
+            } catch (IOException e) {
+                log.error(e);
             }
-            @SuppressWarnings("synthetic-access")
-            private void onSubmit() {
-                o.end();
-                final int endp = o.getCaretPosition();
-                if (endp >= promptPosition) {
-                    sendCommand(o.getText(promptPosition, endp));
-                }
-            }
-        });
-        return o;
+            return new FxWindowConfig();
+        };
+        FxWindowConfig cfg = loader.get();
+        try {
+            FxWindowConfigFile f = new FxWindowConfigFile();
+            cfg = f.read();
+        } catch (IOException e) {
+            log.error(e);
+        }
+        if (cfg.getX() <= 0) {
+            cfg.setX(100);
+        }
+        if (cfg.getY() <= 0) {
+            cfg.setY(100);
+        }
+        if (cfg.getWidth() <= 0) {
+            cfg.setWidth(600);
+        }
+        if (cfg.getHeight() <= 0) {
+            cfg.setHeight(400);
+        }
+        Scene scene = new Scene(root, cfg.getWidth(), cfg.getHeight());
+        return scene;
     }
 
-    private void sendCommand(final String cmd) {
-        Platform.runLater(new Runnable() {
-            @SuppressWarnings("synthetic-access")
-            @Override
-            public void run() {
+    void saveWindowConfig() {
+        FxWindowConfig cfg = loadWindowConfig();
+        cfg.setX((int)stage.getX());
+        cfg.setY((int)stage.getY());
+        cfg.setWidth((int)stage.getWidth());
+        cfg.setHeight((int)stage.getHeight());
+        FxWindowConfigFile f = new FxWindowConfigFile();
+        try {
+            f.write(cfg);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    static FxWindowConfig loadWindowConfig() {
+        try {
+            FxWindowConfigFile f = new FxWindowConfigFile();
+            return f.read();
+        } catch (IOException e) {
+            log.error(e);
+        }
+        return new FxWindowConfig();
+    }
+
+    void handleKeyEvent(KeyEvent e) {
+        switch (e.getCode()) {
+            case W:
+                if (e.isShortcutDown()) {
+                    requestClose();
+                }
+                break;
+            default:
+        }
+    }
+
+    void sendCommand(String cmd) {
+        try {
+            Platform.runLater(() -> {
+                setDisable(true);
+            });
+            Platform.runLater(() -> {
                 if (!Commands.invoke(env, cmd)) {
                     close();
                 }
                 outputPrompt();
-            }
-        });
+            });
+        } finally {
+            Platform.runLater(() -> {
+                setDisable(false);
+                textArea.requestFocus();
+            });
+        }
+    }
+
+    void setDisable(boolean value) {
+        resultTable.setDisable(value);
+        textArea.setDisable(value);
     }
 
     @Override
@@ -118,15 +164,18 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
                 throw new RuntimeException(ex);
             }
         } else if (o instanceof Prompt) {
-            outputPrompt();
+            textArea.outputPrompt();
         } else {
-            outputLine(o);
+            textArea.outputLine(o);
         }
     }
 
     void outputPrompt() {
-        printf("%s", new Prompt(env));
-        promptPosition = textArea.getCaretPosition();
+        textArea.outputPrompt();
+    }
+
+    Prompt getPrompt() {
+        return new Prompt(env);
     }
 
     private void outputResult(ResultSetReference ref) throws SQLException {
@@ -167,24 +216,22 @@ public final class FxLauncher extends Application implements Launcher, OutputPro
         ref.setRecordCount(rowCount);
     }
 
-    private void outputLine(Object... a) {
-        if (a.length == 0) {
-            printf("%n");
-        } else {
-            for (final Object o : a) {
-                printf("%s%n", o);
+    void requestClose() {
+        Alert dialog = new Alert(AlertType.CONFIRMATION);
+        dialog.setHeaderText("");
+        dialog.setContentText(res.s("i.confirm-close"));
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                Platform.runLater(this::close);
             }
-        }
-    }
-
-    private void printf(String format, Object... a) {
-        textArea.appendText(String.format(format, a));
+        });
     }
 
     @Override
     public void close() {
         env.release();
-        Platform.exit();
+        saveWindowConfig();
+        stage.close();
     }
 
     public static void main(String[] args) {

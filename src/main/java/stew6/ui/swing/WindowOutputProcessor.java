@@ -74,7 +74,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
     @Override
     protected void processWindowEvent(WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            launcher.anyActionPerformed(new AnyActionEvent(this, AnyActionKey.closeWindow));
+            launcher.anyActionPerformed(this, AnyActionKey.closeWindow);
         }
     }
 
@@ -172,7 +172,7 @@ final class WindowOutputProcessor extends JFrame implements OutputProcessor, Any
             ImageIcon icon = getImageIcon(String.format("linkable-%s.png", m.isLinkable()));
             scrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, new JLabel(icon, SwingConstants.CENTER));
         }
-        resultSetTable.anyActionPerformed(new AnyActionEvent(this, AnyActionKey.adjustColumnWidth));
+        resultSetTable.anyActionPerformed(this, AnyActionKey.adjustColumnWidth);
         resultSetTable.getTableHeader().setVisible(true);
         resultSetTable.doLayout();
         resultSetTable.setVisible(true);

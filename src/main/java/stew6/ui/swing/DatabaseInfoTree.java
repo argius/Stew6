@@ -78,14 +78,14 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
     protected void processMouseEvent(MouseEvent e) {
         super.processMouseEvent(e);
         if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() % 2 == 0) {
-            anyActionPerformed(new AnyActionEvent(this, jumpToColumnByName));
+            anyActionPerformed(this, jumpToColumnByName);
         }
         if (e.getID() == MouseEvent.MOUSE_CLICKED) {
             if (SwingUtilities.isLeftMouseButton(e)) {
                 int sckm = Utilities.getMenuShortcutKeyMask();
                 if ((e.getModifiers() & sckm) == sckm) {
                     selectionModel.setSelectionPath(getPathForRow(getRowForLocation(e.getX(), e.getY())));
-                    anyActionPerformed(new AnyActionEvent(this, showLimitedRecords));
+                    anyActionPerformed(this, showLimitedRecords);
                 }
             }
         }
@@ -173,8 +173,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
     }
 
     private void insertTextIntoTextArea(String s) {
-        AnyActionEvent ev = new AnyActionEvent(this, ConsoleTextArea.ActionKey.insertText, s);
-        anyActionListener.anyActionPerformed(ev);
+        anyActionListener.anyActionPerformed(this, ConsoleTextArea.ActionKey.insertText, s);
     }
 
     private void copySimpleName() {
@@ -228,8 +227,7 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         Object o = path.getLastPathComponent();
         if (o instanceof ColumnNode) {
             ColumnNode node = (ColumnNode)o;
-            AnyActionEvent ev = new AnyActionEvent(this, ResultSetTable.ActionKey.jumpToColumn, node.getName());
-            anyActionListener.anyActionPerformed(ev);
+            anyActionListener.anyActionPerformed(this, ResultSetTable.ActionKey.jumpToColumn, node.getName());
         }
     }
 
@@ -380,8 +378,8 @@ final class DatabaseInfoTree extends JTree implements AnyActionListener, TextSea
         }
         TableNode t = (TableNode)node;
         final String sql = MessageFormat.format(sqlPattern, t.getNodeFullName());
-        anyActionListener.anyActionPerformed(new AnyActionEvent(this, ConsoleTextArea.ActionKey.insertText, sql));
-        anyActionListener.anyActionPerformed(new AnyActionEvent(this, executeCommand));
+        anyActionListener.anyActionPerformed(this, ConsoleTextArea.ActionKey.insertText, sql);
+        anyActionListener.anyActionPerformed(this, executeCommand);
     }
 
     // text-search
