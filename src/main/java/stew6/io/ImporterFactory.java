@@ -13,18 +13,18 @@ final class ImporterFactory {
 
     /**
      * Returns an Importer.
-     * @param file
-     * @return
+     * @param file the file to import
+     * @return an instance of Importer
      * @throws IOException
      */
     static Importer createImporter(File file) throws IOException {
-        final String ext = FileUtilities.getExtension(file);
-        if (ext.equalsIgnoreCase("xml")) {
-            return new XmlImporter(openFile(file));
-        } else if (ext.equalsIgnoreCase("csv")) {
-            return new CsvImporter(openFile(file));
-        } else {
-            return new CsvImporter(openFile(file), '\t');
+        switch (FileUtilities.getExtension(file).toLowerCase()) {
+            case "xml":
+                return new XmlImporter(openFile(file));
+            case "csv":
+                return new CsvImporter(openFile(file));
+            default:
+                return new CsvImporter(openFile(file), '\t');
         }
     }
 
