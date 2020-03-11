@@ -15,8 +15,6 @@ import stew6.io.*;
 public final class ConnectorMapEditor {
 
     private static final ResourceSheaf res = ConsoleLauncher.res.derive().withClass(ConnectorMapEditor.class);
-    private static final String[] PROP_KEYS = {"name", "classpath", "driver", "url", "user",
-                                               "password", "readonly", "rollback"};
 
     private final ConnectorMap map;
 
@@ -41,7 +39,7 @@ public final class ConnectorMapEditor {
         while (true) {
             printMessage("property.start1");
             printMessage("property.start2");
-            for (String key : PROP_KEYS) {
+            for (String key : ConnectorMap.propertyKeys) {
                 String value = props.getProperty(key);
                 print(res.format("property.input", key, value));
                 String input = getInput("");
@@ -49,7 +47,7 @@ public final class ConnectorMapEditor {
                     props.setProperty(key, input);
                 }
             }
-            for (String key : PROP_KEYS) {
+            for (String key : ConnectorMap.propertyKeys) {
                 printLine(key + "=" + props.getProperty(key));
             }
             if (confirmYes("property.tryconnect.confirm")) {
@@ -92,7 +90,7 @@ public final class ConnectorMapEditor {
         }
         Properties props = new Properties();
         // setting default
-        for (String key : PROP_KEYS) {
+        for (String key : ConnectorMap.propertyKeys) {
             props.setProperty(key, "");
         }
         if (proceedInputProperties(id, props)) {
@@ -173,7 +171,7 @@ public final class ConnectorMapEditor {
             return;
         }
         Properties props = map.getConnector(id).toProperties();
-        for (String key : PROP_KEYS) {
+        for (String key : ConnectorMap.propertyKeys) {
             printLine(String.format("%10s : %s", key, props.getProperty(key)));
         }
     }
