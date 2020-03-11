@@ -73,7 +73,6 @@ public final class ConnectorMapEditor {
                 return true;
             }
             if (!confirmYes("property.retry.confirm")) {
-                printMessage("property.update.cancel");
                 return false;
             }
         }
@@ -96,6 +95,8 @@ public final class ConnectorMapEditor {
         if (proceedInputProperties(id, props)) {
             map.put(id, new Connector(id, props));
             printMessage("proc.added", id);
+        } else {
+            printMessage("property.add.cancel");
         }
     }
 
@@ -112,6 +113,8 @@ public final class ConnectorMapEditor {
         if (proceedInputProperties(id, props)) {
             map.put(id, new Connector(id, props));
             printMessage("proc.modified", id);
+        } else {
+            printMessage("property.update.cancel");
         }
     }
 
