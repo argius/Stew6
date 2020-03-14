@@ -30,6 +30,7 @@ property.tryconnect.succeeded=Succeeded.
 property.tryconnect.failed=Failed.({0})
 property.update.confirm=Do you want to update it?
 property.retry.confirm=Do you want to retry it?
+property.add.cancel=Adding was canceled.
 property.update.cancel=Updating was canceled.
 help =\
  ---Help(Command List)---\n\
