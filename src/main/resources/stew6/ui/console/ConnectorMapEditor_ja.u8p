@@ -30,6 +30,7 @@ property.tryconnect.succeeded=成功しました。
 property.tryconnect.failed=失敗しました。({0})
 property.update.confirm=これでよろしいですか？
 property.retry.confirm=変更をやり直しますか？
+property.add.cancel=追加を中止します。
 property.update.cancel=変更を中止します。
 help =\
  ---ヘルプ（コマンド一覧）---\n\

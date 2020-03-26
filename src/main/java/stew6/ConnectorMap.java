@@ -11,6 +11,10 @@ import stew6.ConnectorsConfig.*;
  */
 public final class ConnectorMap extends LinkedHashMap<String, Connector> {
 
+    public static final List<String> propertyKeys = Arrays.asList("name", "driver", "classpath", "classpathref", "url",
+                                                                  "user", "password", "password.class", "readonly",
+                                                                  "rollback");
+
     /**
      * A constructor.
      */
